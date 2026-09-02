@@ -1,0 +1,10 @@
+# ไฟล์ระบบ
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ของที่ไม่ต้องขึ้น repo
+node_modules/
+shots-land/
+shots-port/
+*.log

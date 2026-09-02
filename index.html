@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mini Game Catalog — เกมทัชสกรีนสำเร็จรูป 30 เกม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="index.html">
+      <div class="logo-mark" id="logoMark">🎮</div>
+      <div>
+        <b id="brandName">YOUR BRAND</b>
+        <span id="brandTag">เกมทัชสกรีนสำเร็จรูป</span>
+      </div>
+    </a>
+    <div class="spacer"></div>
+    <img id="hitBadge" class="viewBadge" alt="" style="display:none">
+    <div class="lang">
+      <button data-lang="th" class="on">ไทย</button>
+      <button data-lang="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <h1 data-t="heroTitle">100+ เกมทัชสกรีน พร้อมใช้งานทันที</h1>
+  <p data-t="heroDesc">เลือกแนวเกมที่ชอบ กดทดลองเล่นได้จริงบนหน้าเว็บนี้เลย ทุกเกมออกแบบมาสำหรับจอสัมผัสโดยเฉพาะ เล่นง่าย เข้าใจใน 3 วินาที เหมาะกับงานอีเวนต์ บูธแสดงสินค้า และหน้าร้าน</p>
+</section>
+
+<div class="filters" id="filters"></div>
+
+<div class="sortbar">
+  <span data-t="sortLbl">เรียงลำดับ</span>
+  <div class="sortseg" id="sortSeg"></div>
+</div>
+
+<main class="wrap">
+  <div class="grid" id="grid"></div>
+  <div class="pager" id="pager"></div>
+  <div class="pgnote" id="pgnote"></div>
+</main>
+
+<footer class="foot">
+  <div data-t="footNote">ราคา 9,500 บาท/เกม เป็นราคาสำหรับรูปแบบการเล่นมาตรฐานตามที่แสดงในเว็บนี้<br>ลูกค้าปรับแต่งได้ในส่วนของกราฟฟิก โลโก้ และภาพพื้นหลัง</div>
+</footer>
+
+<!-- ================= MODAL ================= -->
+<div class="mask" id="mask">
+  <div class="modal" id="modal">
+    <div class="m-hero" id="mHero">
+      <button class="m-close" id="mClose">✕</button>
+      <div class="ico" id="mIco">🎮</div>
+      <!-- ปุ่มทดลองเล่น overlay ทับรูปเกม -->
+      <button class="m-play" id="mPlay"><span data-t="tryPlay">ทดลองเล่น</span></button>
+    </div>
+    <div class="m-body">
+      <h2 id="mName"></h2>
+      <p class="m-sub" id="mTag"></p>
+
+      <div class="m-stats">
+        <button class="heart" id="mHeart">🤍 <b>0</b></button>
+        <span class="vcount">👁 <span data-t="viewsLbl">ยอดวิว</span> <b id="mViews">0</b></span>
+      </div>
+      <div class="likemsg" id="mLikeMsg"></div>
+
+      <div class="sec">
+        <h4 data-t="hHow">วิธีเล่น</h4>
+        <ol id="mHow"></ol>
+      </div>
+
+      <div class="sec">
+        <h4 data-t="hDev">ใช้กับอุปกรณ์อะไรได้บ้าง</h4>
+        <div class="devs" id="mDev"></div>
+      </div>
+
+      <div class="sec">
+        <h4 data-t="hCus">เปลี่ยนกราฟฟิกส่วนไหนได้บ้าง</h4>
+        <div class="custom-box">
+          <ul id="mCus"></ul>
+          <div class="lock" data-t="lockNote">🔒 รูปแบบการเล่น กติกา และระบบคะแนน เป็นแบบมาตรฐานตามราคานี้ หากต้องการปรับกลไกการเล่นใหม่ คิดราคาเพิ่มตามงาน</div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h4 data-t="hSim">ดูตัวอย่างบนจอหน้างาน</h4>
+        <div class="simrow">
+          <div class="simstage">
+            <div class="simprev o-land d-touch" id="simPrev">
+              <div class="sp-body"><div class="sp-scr" id="spScr"><span id="spIco">🎮</span></div><div class="sp-chin"></div></div>
+              <div class="sp-neck"></div>
+              <div class="sp-base"></div>
+            </div>
+          </div>
+          <div class="simctl">
+            <div class="seg2" id="segOri2">
+              <button data-o="land">🖥 <span data-t="land">แนวนอน 16:9</span></button>
+              <button data-o="port">📱 <span data-t="port">แนวตั้ง 9:16</span></button>
+            </div>
+            <div class="seg2 wrap2" id="segDev2"></div>
+            <p class="simnote" data-t="simNote">เลือกแนวจอและแบบจอที่จะใช้จริงหน้างาน แล้วกดทดลองเล่น เกมจะจัดวางใหม่ให้พอดีจอนั้นโดยอัตโนมัติ</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="m-foot">
+        <button class="btn btn-1" id="mPlay2">▶ <span data-t="tryPlay">ทดลองเล่น</span></button>
+        <button class="btn btn-2" id="mNext"><span data-t="nextGame">เกมถัดไป</span> →</button>
+      </div>
+      <div class="price-line"><span data-t="startAt">เริ่มต้น</span> <b id="mPrice">9,500</b> <span data-t="perGame">บาท / เกม</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/brand.js"></script>
+<script src="assets/js/games-data.js"></script>
+<script src="assets/js/games-data-2.js"></script>
+<script src="assets/js/games-data-3.js"></script>
+<script src="assets/js/stats.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

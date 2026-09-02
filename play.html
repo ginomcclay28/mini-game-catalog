@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Play — Mini Game Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#0b0620;
+  font-family:'Kanit','Noto Sans Thai',-apple-system,'Segoe UI',sans-serif;color:#fff;
+  overscroll-behavior:none;touch-action:none}
+button{font-family:inherit;border:0;cursor:pointer;color:inherit}
+#app{display:flex;flex-direction:column;height:100%}
+
+/* ---------- HUD ---------- */
+/* แถบเดียวเสมอ 3 คอลัมน์: ซ้าย=กลับ+แนวจอ+จอสัมผัส / กลาง=ชื่อเกม+ลูกศร / ขวา=หัวใจ+คะแนน+สถิติ
+   คอลัมน์ซ้าย-ขวากว้างเท่ากัน (1fr) กลุ่มกลางจึงอยู่กึ่งกลางจริง ไม่ขยับตามความยาวชื่อเกม
+   ห้ามตัดบรรทัด (nowrap) ถ้าจอแคบจะย่อขนาดและซ่อนของที่ไม่จำเป็นแทน */
+#hud{flex:none;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;
+  padding:9px 14px;flex-wrap:nowrap;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;   /* กันไว้: จอเล็กมากให้เลื่อนแทนตัดบรรทัด */
+  background:rgba(0,0,0,.42);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.1);z-index:20}
+#hud::-webkit-scrollbar{display:none}
+.hud-l,.hud-r{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0;white-space:nowrap}
+.hud-l{justify-content:flex-start}
+.hud-r{justify-content:flex-end}
+#back{background:rgba(255,255,255,.14);padding:9px 15px;border-radius:11px;font-size:14px;font-weight:600;
+  display:flex;align-items:center;gap:7px;text-decoration:none;color:#fff}
+#back:hover{background:rgba(255,255,255,.26)}
+.nav{display:flex;align-items:center;gap:8px;justify-self:center}
+.nav button{background:rgba(255,255,255,.14);width:40px;height:40px;flex:none;border-radius:11px;
+  font-size:23px;line-height:1;font-weight:700;display:grid;place-items:center;transition:.16s}
+.nav button:hover{background:rgba(255,255,255,.3);transform:scale(1.08)}
+/* ความกว้างคงที่ ลูกศรสองข้างจึงอยู่ตำแหน่งเดิมทุกเกม ไม่ดิ้นตามความยาวชื่อ */
+#gwrap{width:238px;text-align:center;overflow:hidden}
+#gname{font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+#gpos{font-size:11.5px;font-weight:600;opacity:.55;letter-spacing:.06em}
+.stat{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);padding:8px 14px;border-radius:11px;font-size:14px;font-weight:600}
+.stat b{font-size:18px;font-weight:800}
+#sScore b{color:#ffd23f}#sTime b{color:#00d4ff}#sLife b{color:#ff5252}#sView b{color:#c9c4e8;font-size:15px}
+.hide{display:none!important}
+#hitBadge{height:26px;border-radius:7px;display:block}
+
+.seg{display:flex;background:rgba(255,255,255,.1);border-radius:11px;padding:3px;gap:2px}
+.seg button{background:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;opacity:.62;white-space:nowrap}
+.seg button.on{background:rgba(255,255,255,.9);color:#1b1442;opacity:1}
+#simBtn{background:rgba(255,255,255,.12);padding:8px 15px;border-radius:11px;font-size:13.5px;font-weight:700;
+  display:flex;align-items:center;gap:8px;white-space:nowrap;border:1.5px solid transparent}
+#simBtn.on{background:linear-gradient(135deg,#ff2e88,#7b2ff7);border-color:rgba(255,255,255,.35);box-shadow:0 6px 18px rgba(255,46,136,.4)}
+#likeBtn{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);padding:8px 15px;
+  border-radius:11px;font-size:14px;font-weight:700;transition:.18s}
+#likeBtn:hover{background:rgba(255,255,255,.22)}
+#likeBtn.on{background:linear-gradient(135deg,#ff2e88,#ff6a3d);box-shadow:0 6px 18px rgba(255,46,136,.4);cursor:default}
+#likeBtn b{font-size:16px}
+
+/* ---------- STAGE / SCENE ---------- */
+#stage{flex:1;position:relative;min-height:0;overflow:hidden}
+#scene{position:absolute;inset:0;display:grid;place-items:center;
+  background:radial-gradient(120% 70% at 50% -8%,#3a2a78 0%,#1a0f3f 45%,#0b0620 100%)}
+#scene.plain{background:#120a2e}
+#floor{position:absolute;left:0;right:0;bottom:0;height:34%;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015) 40%,transparent);
+  border-top:1px solid rgba(255,255,255,.10)}
+#spot{position:absolute;left:50%;top:0;width:120%;height:100%;transform:translateX(-50%);
+  background:radial-gradient(50% 55% at 50% 42%,rgba(255,230,180,.16),transparent 70%);pointer-events:none}
+#truss{position:absolute;left:0;right:0;top:0;height:22px;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 3px,transparent 3px 24px);
+  border-bottom:2px solid rgba(255,255,255,.12)}
+#banner{position:absolute;top:34px;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:.34em;
+  color:rgba(255,255,255,.32);font-weight:600;white-space:nowrap}
+.plain #floor,.plain #spot,.plain #truss,.plain #banner{display:none}
+
+/* ---------- DEVICE: On-Touch Screen ---------- */
+#device{position:relative;display:flex;flex-direction:column;align-items:center;z-index:2}
+.dv-body{position:relative;background:#101018;
+  box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08) inset}
+#device.d-none .dv-body{background:transparent;box-shadow:0 18px 60px rgba(0,0,0,.55)}
+.dv-screen{position:relative;overflow:hidden;background:#000;display:block}
+.dv-screen canvas{display:block;width:100%;height:100%;touch-action:none}
+/* แถบสะท้อนแสงบนกระจกจอสัมผัส */
+#device.d-touch .dv-screen::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:6;
+  background:linear-gradient(112deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 26%,rgba(255,255,255,0) 72%,rgba(255,255,255,.05) 100%)}
+.dv-logo{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:.5em;
+  color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.12em}
+.dv-logo i{display:block;width:.5em;height:.5em;border-radius:50%;background:#ff2e88;font-style:normal}
+.dv-neck{background:linear-gradient(90deg,#1a1a24,#33333f,#1a1a24)}
+.dv-base{background:linear-gradient(180deg,#33333f,#191921);border-radius:999px;
+  box-shadow:0 16px 34px rgba(0,0,0,.55)}
+
+/* ---------- OVERLAY (อยู่ในจอ) ---------- */
+#ov{position:absolute;inset:0;display:grid;place-items:center;z-index:5;
+  background:rgba(12,7,32,.86);backdrop-filter:blur(6px);text-align:center;overflow:hidden;
+  padding:calc(22px * var(--k,1))}
+#ov .in{max-width:100%;width:100%}
+#ov .em{font-size:calc(70px * var(--k,1));line-height:1;margin-bottom:calc(12px * var(--k,1))}
+#ov h1{font-size:calc(34px * var(--k,1));font-weight:800;margin-bottom:calc(8px * var(--k,1));line-height:1.25}
+#ov p{font-size:calc(15px * var(--k,1));line-height:1.7;opacity:.85;margin:0 auto;max-width:36em}
+#ovScore{font-size:calc(14px * var(--k,1));opacity:.9;margin:calc(14px * var(--k,1)) 0 0}
+#ovScore b{font-size:calc(44px * var(--k,1));font-weight:800;color:#ffd23f;display:block;line-height:1.15}
+#howlist{text-align:left;display:inline-block;margin:calc(12px * var(--k,1)) auto 0;padding-left:calc(20px * var(--k,1))}
+#howlist li{font-size:calc(14px * var(--k,1));line-height:1.8;opacity:.85}
+#ovBtns{display:flex;gap:calc(10px * var(--k,1));justify-content:center;flex-wrap:wrap;margin-top:calc(18px * var(--k,1))}
+.b1{background:linear-gradient(135deg,#ff2e88,#7b2ff7);color:#fff;font-weight:700;
+  padding:calc(14px * var(--k,1)) calc(30px * var(--k,1));border-radius:calc(13px * var(--k,1));font-size:calc(16px * var(--k,1))}
+.b2{background:rgba(255,255,255,.16);color:#fff;text-decoration:none;font-weight:600;
+  padding:calc(14px * var(--k,1)) calc(24px * var(--k,1));border-radius:calc(13px * var(--k,1));font-size:calc(15px * var(--k,1))}
+#tip{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12px;opacity:.4;z-index:3;pointer-events:none;padding:0 12px}
+#dims{position:absolute;top:10px;right:14px;font-size:11.5px;letter-spacing:.1em;opacity:.4;z-index:3}
+
+/* จอแคบลง: ย่อขนาดก่อน แล้วค่อยซ่อนของที่ไม่จำเป็น เพื่อให้อยู่บรรทัดเดียวเสมอ */
+@media(max-width:1550px){
+  #hud{gap:8px;padding:8px 12px}
+  .stat{padding:6px 11px;font-size:12.5px}.stat b{font-size:15px}
+  .seg button{padding:6px 10px;font-size:12px}
+  #simBtn,#likeBtn{padding:7px 11px;font-size:12px}
+  #back{padding:8px 12px;font-size:13px}
+  #gwrap{width:206px}
+  #hitBadge{height:22px}
+}
+@media(max-width:1300px){
+  #hitBadge{display:none!important}
+  #sView{display:none!important}
+  #gwrap{width:178px}
+  #gname{font-size:14.5px}
+}
+@media(max-width:1150px){
+  /* เหลือเฉพาะไอคอน ตัดข้อความออกให้พอดีบรรทัดเดียว */
+  #segOri button span,#simBtn span,#backTxt{display:none}
+  #simBtn{padding:7px 12px}
+  #gwrap{width:150px}
+  #gname{font-size:13.5px}
+  #gpos{font-size:10.5px}
+  .nav button{width:34px;height:34px;font-size:20px}
+  .stat{padding:5px 9px;font-size:12px}.stat b{font-size:14px}
+}
+@media(max-width:760px){
+  #sLife{display:none!important}
+  #gwrap{width:120px}
+  #gname{font-size:12.5px}
+}
+@media(max-width:660px){
+  /* ขนาดมือถือ: ซ่อนปุ่มสลับแนวจอ (มือถือหมุนเครื่องเอาได้) เหลือปุ่มกรอบจอสัมผัส */
+  #segOri{display:none!important}
+  #gwrap{width:100px}
+  #gname{font-size:12px}
+  .nav{gap:5px}
+  .nav button{width:30px;height:30px;font-size:18px}
+}
+@media(max-width:600px){
+  #likeBtn{display:none!important}
+  #gwrap{width:84px}
+  .stat{padding:4px 7px;font-size:11px}.stat b{font-size:13px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="hud-l">
+      <a id="back" href="index.html">← <span id="backTxt">กลับ</span></a>
+      <div class="seg" id="segOri">
+        <button data-o="land">🖥 <span data-t="land">แนวนอน</span></button>
+        <button data-o="port">📱 <span data-t="port">แนวตั้ง</span></button>
+      </div>
+      <button id="simBtn">🖐 <span data-t="sim">On-Touch Screen</span></button>
+    </div>
+
+    <div class="nav">
+      <button id="prevBtn" title="เกมก่อนหน้า">‹</button>
+      <div id="gwrap"><div id="gname">—</div><div id="gpos">—</div></div>
+      <button id="nextBtn" title="เกมถัดไป">›</button>
+    </div>
+
+    <div class="hud-r">
+      <button id="likeBtn" title="กดหัวใจให้เกมนี้">🤍 <b>0</b></button>
+      <div class="stat hide" id="sScore"><span id="scoreLbl">คะแนน</span> <b>0</b></div>
+      <div class="stat hide" id="sTime">⏱ <b>0</b></div>
+      <div class="stat hide" id="sLife">❤ <b>3</b></div>
+      <div class="stat hide" id="sView">👁 <b>0</b></div>
+      <img id="hitBadge" alt="" class="hide">
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="scene">
+      <div id="truss"></div>
+      <div id="banner">MINI GAME ZONE</div>
+      <div id="spot"></div>
+      <div id="floor"></div>
+
+      <div id="device" class="d-touch">
+        <div class="dv-body" id="dvBody">
+          <div class="dv-screen" id="dvScreen">
+            <canvas id="cv" width="1280" height="720"></canvas>
+            <div id="ov">
+              <div class="in">
+                <div class="em" id="ovEm">🎮</div>
+                <h1 id="ovTitle">—</h1>
+                <p id="ovDesc"></p>
+                <div id="ovScore" class="hide"><span id="ovScoreLbl"></span><b>0</b></div>
+                <ol id="howlist"></ol>
+                <div id="ovBtns">
+                  <button class="b1" id="ovGo">เริ่มเล่น</button>
+                  <button class="b2 hide" id="ovNext">เกมถัดไป →</button>
+                  <a class="b2" href="index.html" id="ovBack">กลับหน้ารวมเกม</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dv-logo" id="dvLogo"><i></i><span>YOUR BRAND</span></div>
+        </div>
+        <div class="dv-neck" id="dvNeck"></div>
+        <div class="dv-base" id="dvBase"></div>
+      </div>
+    </div>
+    <div id="dims"></div>
+    <div id="tip"></div>
+  </div>
+</div>
+
+<script src="assets/js/brand.js"></script>
+<script src="assets/js/games-data.js"></script>
+<script src="assets/js/games-data-2.js"></script>
+<script src="assets/js/games-data-3.js"></script>
+<script src="assets/js/stats.js"></script>
+<script src="assets/js/engine.js"></script>
+<script src="games/pack1.js"></script>
+<script src="games/pack2.js"></script>
+<script src="games/pack3.js"></script>
+<script src="games/pack4.js"></script>
+<script src="games/pack5.js"></script>
+<script src="games/pack6.js"></script>
+<script src="games/pack7.js"></script>
+<script src="games/pack8.js"></script>
+<script src="games/pack9.js"></script>
+<script src="games/pack10.js"></script>
+<script>MiniGame.boot();</script>
+</body>
+</html>
