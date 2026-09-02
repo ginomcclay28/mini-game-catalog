@@ -93,7 +93,11 @@
     $('#brandName').textContent = BRAND.name;
     $('#brandTag').textContent = BRAND.tagline[lang];
     $('#mPrice').textContent = BRAND.price.toLocaleString();
-    if (BRAND.logo) $('#logoMark').innerHTML = '<img src="' + BRAND.logo + '" alt="logo" style="width:100%;height:100%;object-fit:contain">';
+    if (BRAND.logo) {
+      var lm = $('#logoMark');
+      lm.classList.add('has-img');
+      lm.innerHTML = '<img src="' + BRAND.logo + '" alt="' + BRAND.name + '" style="width:100%;height:100%;object-fit:contain">';
+    }
     $('#sortSeg').innerHTML = ['order', 'likes', 'views'].map(function (k) {
       return '<button data-s="' + k + '"' + (k === sort ? ' class="on"' : '') + '>' + T[lang].sorts[k] + '</button>';
     }).join('');

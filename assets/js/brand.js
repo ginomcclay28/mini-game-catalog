@@ -4,26 +4,26 @@
    รูปแบบการเล่น (gameplay) คงเดิมตามราคา 9,500 บาท/เกม
    ============================================================ */
 window.BRAND = {
-  name: "YOUR BRAND",
+  name: "T-STONE",
   tagline: { th: "เกมทัชสกรีนสำเร็จรูป", en: "Ready-made Touchscreen Games" },
 
   // โลโก้: ใส่ path รูป เช่น "assets/img/logo.png" (ถ้าเป็น null จะใช้ตัวอักษรแทน)
-  logo: null,
+  logo: "assets/img/tstone-logo.svg",
 
   // ภาพพื้นหลังในเกม: ใส่ path รูป เช่น "assets/img/bg.jpg" (null = ใช้สีไล่เฉด)
   gameBg: null,
 
-  // ชุดสีหลัก
+  // ชุดสีหลัก (ชุดนี้อิงจากสีของเว็บ T-Stone)
   colors: {
-    primary:   "#ff2e88",   // สีหลัก / ปุ่ม
-    secondary: "#00d4ff",   // สีรอง
-    accent:    "#ffd23f",   // สีเน้น / คะแนน
-    good:      "#2fe08a",   // ถูก / สำเร็จ
-    bad:       "#ff5252",   // ผิด / พลาด
-    dark:      "#1b1442",   // ตัวหนังสือเข้ม
+    primary:   "#ff6b57",   // สีหลัก / ปุ่ม        (coral)
+    secondary: "#58d8ff",   // สีรอง                (cyan)
+    accent:    "#ffd75e",   // สีเน้น / คะแนน       (yellow)
+    good:      "#8cc63f",   // ถูก / สำเร็จ         (lime — สีโลโก้)
+    bad:       "#ff4646",   // ผิด / พลาด
+    dark:      "#10131d",   // ตัวหนังสือเข้ม       (ink)
     light:     "#ffffff",
-    bgTop:     "#7b2ff7",   // พื้นหลังเกม บน
-    bgBottom:  "#2ec7ff"    // พื้นหลังเกม ล่าง
+    bgTop:     "#7658ff",   // พื้นหลังเกม บน       (violet)
+    bgBottom:  "#58d8ff"    // พื้นหลังเกม ล่าง
   },
 
   // ราคาเริ่มต้นต่อเกม

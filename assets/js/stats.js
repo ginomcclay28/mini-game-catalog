@@ -82,7 +82,7 @@ window.Stats = (function () {
       if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(host)) return null;
       var c = (BRAND.colors || {});
       return 'https://hits.sh/' + p + '/' + page + '.svg'
-        + '?label=views&bgLeft=1b1442&bgRight=' + (c.primary || '#ff2e88').replace('#', '')
+        + '?label=views&bgLeft=10131d&bgRight=' + (c.primary || '#ff6b57').replace('#', '')
         + '&color=ffffff&border=round';
     },
 

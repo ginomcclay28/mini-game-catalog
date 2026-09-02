@@ -355,7 +355,11 @@ window.MiniGame = (function () {
     $('#ovNext').textContent = u.next;
     $('#tip').textContent = u.demo;
     document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = u[el.getAttribute('data-t')]; });
-    $('#dvLogo').lastElementChild.textContent = BRAND.name;
+    var dvl = $('#dvLogo');
+    dvl.lastElementChild.textContent = BRAND.name;
+    // จุดสีบนคางจอ: ถ้ามีโลโก้เป็นรูปให้ใช้รูปแทน ไม่งั้นใช้สีหลักของแบรนด์
+    if (BRAND.logo) dvl.firstElementChild.outerHTML = '<img src="' + BRAND.logo + '" alt="">';
+    else dvl.firstElementChild.style.background = BRAND.colors.primary;
 
     $('#simBtn').onclick = function () {
       sim = !sim; dev = sim ? 'touch' : 'none';
