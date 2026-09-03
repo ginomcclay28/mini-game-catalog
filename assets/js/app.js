@@ -128,7 +128,12 @@
   function saveNav(L) {
     lsSet('mg_cat', cat); lsSet('mg_sort', sort); lsSet('mg_page', page);
     try { lsSet('mg_list', JSON.stringify(L.map(function (g) { return g.id; }))); } catch (e) { }
-    try { history.replaceState(null, '', '?cat=' + cat + '&sort=' + sort + '&p=' + page); } catch (e) { }
+    /* ไม่เขียนค่าลง URL แล้ว (?cat=&sort=&p= ทำให้ URL รกตา)
+       สถานะเก็บใน localStorage อยู่แล้ว รีเฟรชหรือกดกลับจากหน้าเล่นก็ยังอยู่ที่เดิม
+       ถ้าเผลอเปิดลิงก์เก่าที่ยังมีพารามิเตอร์ติดมา ให้ล้างออกจากแถบ URL ให้สะอาด */
+    try {
+      if (location.search) history.replaceState(null, '', location.pathname);
+    } catch (e) { }
   }
 
   /* -------- grid -------- */
