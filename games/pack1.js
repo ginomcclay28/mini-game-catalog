@@ -50,12 +50,20 @@
       var d = a.data, rx = d.rx;
       g.fillStyle = '#8d5a3b'; g.fillRect(0, d.top * .8, a.W, a.H - d.top * .8);
       d.holes.forEach(function (h) {
-        g.beginPath(); g.ellipse(h.x, h.y, rx * 1.12, rx * .44, 0, 0, 6.29);
-        g.fillStyle = '#3d2418'; g.fill();
+        /* ภาพตัวตุ่นมีขอบหลุมติดมาในตัวอยู่แล้ว จึงไม่วาดหลุมซ้อนใต้ตัวที่โผล่
+           แต่ระเบิดไม่มีขอบ ต้องวาดหลุมรองให้ ไม่งั้นจะดูลอย */
+        if (a.hasSpr('hole')) { if (!(h.up && !h.bomb)) a.spr('hole', null, h.x, h.y, rx * 1.75); }
+        else {
+          g.beginPath(); g.ellipse(h.x, h.y, rx * 1.12, rx * .44, 0, 0, 6.29);
+          g.fillStyle = '#3d2418'; g.fill();
+        }
       });
       d.holes.forEach(function (h) {
-        if (h.up) EM(g, h.bomb ? '💣' : '🐹', h.x, h.y - rx * .55, rx * 1.75);
-        if (h.pop > 0) a.text(h.bomb ? '-15' : '+10', h.x, h.y - rx * 1.5, rx * .55, h.bomb ? a.C.bad : a.C.accent);
+        if (h.up) a.spr(h.bomb ? 'bomb' : 'mole', h.bomb ? '💣' : '🐹', h.x, h.y - rx * .55, rx * 1.75);
+        if (h.pop > 0) {
+          a.spr('hit', null, h.x, h.y - rx * .55, rx * 2.1, { alpha: Math.min(1, h.pop / .35) });
+          a.text(h.bomb ? '-15' : '+10', h.x, h.y - rx * 1.5, rx * .55, h.bomb ? a.C.bad : a.C.accent);
+        }
       });
       a.head(a.txt({ th: 'แตะตัวตุ่น • เลี่ยงระเบิด', en: 'Tap moles • avoid bombs' }));
     }
@@ -99,11 +107,21 @@
         g.beginPath(); g.moveTo(b.x, b.y + b.r);
         g.quadraticCurveTo(b.x + b.r * .3, b.y + b.r * 1.6, b.x, b.y + b.r * 2.3); g.stroke();
         var col = b.k === 'gold' ? '#ffd23f' : (b.k === 'spike' ? '#2b2b3d' : b.c);
-        g.beginPath(); g.ellipse(b.x, b.y, b.r * .86, b.r, 0, 0, 6.29); g.fillStyle = col; g.fill();
-        g.beginPath(); g.ellipse(b.x - b.r * .28, b.y - b.r * .32, b.r * .2, b.r * .3, -.4, 0, 6.29);
-        g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
-        if (b.k === 'gold') EM(g, '⭐', b.x, b.y, b.r * .8);
-        if (b.k === 'spike') EM(g, '💥', b.x, b.y, b.r * .72);
+        if (a.hasSpr('balloon')) {
+          /* ภาพลูกโป่งเป็นสีขาว เกมย้อมสีทับให้เข้ากับแบรนด์ */
+          g.save(); g.globalCompositeOperation = 'source-over';
+          a.spr('balloon', null, b.x, b.y, b.r * 2.2);
+          g.globalCompositeOperation = 'source-atop';
+          g.globalAlpha = .72; g.fillStyle = col;
+          g.fillRect(b.x - b.r * 1.3, b.y - b.r * 1.3, b.r * 2.6, b.r * 2.6);
+          g.restore();
+        } else {
+          g.beginPath(); g.ellipse(b.x, b.y, b.r * .86, b.r, 0, 0, 6.29); g.fillStyle = col; g.fill();
+          g.beginPath(); g.ellipse(b.x - b.r * .28, b.y - b.r * .32, b.r * .2, b.r * .3, -.4, 0, 6.29);
+          g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
+        }
+        if (b.k === 'gold') a.spr('star', '⭐', b.x, b.y, b.r * .8);
+        if (b.k === 'spike') a.spr('pop', '💥', b.x, b.y, b.r * .72);
       });
       a.data.fx.forEach(function (f) {
         g.globalAlpha = Math.max(0, f.t * 2);
@@ -208,16 +226,23 @@
       a.bg('#ff9a5b', '#ffe082');
       var d = a.data;
       g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(0, a.H - a.mn * .06, a.W, a.mn * .06);
+      /* จับคู่อิโมจิเดิมกับคีย์ภาพ ถ้าไม่มีไฟล์ก็ตกกลับไปวาดอิโมจิเหมือนเดิม */
+      var KEY = { '🍎': 'apple', '🍊': 'orange', '🍇': 'grape', '🍓': 'straw',
+                  '🍋': 'lemon', '🍉': 'melon', '💣': 'bomb' };
       d.it.forEach(function (o) {
-        g.save(); g.translate(o.x, o.y); g.rotate(Math.sin(o.sp) * .25); EM(g, o.e, 0, 0, d.is); g.restore();
+        a.spr(KEY[o.e] || '', o.e, o.x, o.y, d.is, { rot: Math.sin(o.sp) * .25 });
       });
       var bx = d.bx, by = d.by, hw = d.hw, bh = a.mn * .10;
-      a.shadow(true);
-      g.beginPath(); g.moveTo(bx - hw, by); g.lineTo(bx + hw, by);
-      g.lineTo(bx + hw * .78, by + bh); g.lineTo(bx - hw * .78, by + bh); g.closePath();
-      g.fillStyle = a.C.primary; g.fill(); a.shadow(false);
-      a.fillRR(bx - hw * 1.08, by - a.mn * .014, hw * 2.16, a.mn * .028, a.mn * .014, '#ffffff');
-      a.text('LOGO', bx, by, a.mn * .021, a.C.primary);
+      if (a.hasSpr('basket')) {
+        a.spr('basket', null, bx, by + bh * .5, bh * 1.6);
+      } else {
+        a.shadow(true);
+        g.beginPath(); g.moveTo(bx - hw, by); g.lineTo(bx + hw, by);
+        g.lineTo(bx + hw * .78, by + bh); g.lineTo(bx - hw * .78, by + bh); g.closePath();
+        g.fillStyle = a.C.primary; g.fill(); a.shadow(false);
+        a.fillRR(bx - hw * 1.08, by - a.mn * .014, hw * 2.16, a.mn * .028, a.mn * .014, '#ffffff');
+        a.text('LOGO', bx, by, a.mn * .021, a.C.primary);
+      }
     }
   });
 

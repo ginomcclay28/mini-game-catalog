@@ -55,6 +55,38 @@ window.MiniGame = (function () {
   }
 
   /* ============ API ที่ส่งให้เกม ============ */
+  /* ============================================================
+     ระบบภาพประกอบเกม (sprite)
+     - โหลดภาพที่ประกาศไว้ใน sprites.js ก่อนเริ่มเกม
+     - เกมเรียก a.spr('mole','🐹', x, y, size) -> มีภาพก็วาดภาพ ไม่มีก็วาดอิโมจิ
+     - รองรับ sprite sheet แถวเดียว {src, frames, fps}
+     ============================================================ */
+  var SPR = {};        // key -> {img, frames, fps}
+  var sprBase = '';
+
+  function loadSprites(gameId, done) {
+    SPR = {};
+    var man = (window.GAME_SPRITES || {})[gameId];
+    if (!man) return done();
+    sprBase = 'assets/sprites/' + gameId + '/';
+    var keys = Object.keys(man), left = keys.length;
+    if (!left) return done();
+    var finished = false;
+    function tick() { if (!--left && !finished) { finished = true; done(); } }
+    keys.forEach(function (k) {
+      var v = man[k], src = typeof v === 'string' ? v : v.src;
+      var im = new Image();
+      im.onload = function () {
+        SPR[k] = { img: im, frames: (v.frames || 1), fps: (v.fps || 10) };
+        tick();
+      };
+      im.onerror = tick;                 // ไม่มีไฟล์ก็ข้ามไป ใช้อิโมจิแทน
+      im.src = sprBase + src;
+    });
+    /* กันเหนียว: ถ้าเน็ตอืดเกิน 2.5 วิ เริ่มเกมเลย ภาพที่มาทีหลังจะโผล่เอง */
+    setTimeout(function () { if (!finished) { finished = true; done(); } }, 2500);
+  }
+
   function makeApi() {
     var C = BRAND.colors;
     var a = {
@@ -79,7 +111,43 @@ window.MiniGame = (function () {
       txt: function (o) { return o[lang] || o.th; },
       beep: beep,
 
+      /* มีภาพของคีย์นี้ไหม */
+      hasSpr: function (k) { return !!SPR[k]; },
+
+      /* วาดภาพประกอบ ถ้าไม่มีไฟล์จะวาดอิโมจิที่ส่งมาแทน
+         a.spr(key, fallbackEmoji, x, y, size, opt)
+         x,y = จุดกึ่งกลาง   size = ความสูงที่ต้องการ (กว้างคำนวณตามสัดส่วนภาพ)
+         opt = { rot: เรเดียน, alpha: 0-1, flip: true, tint: '#rrggbb' } */
+      spr: function (k, emo, x, y, size, opt) {
+        var s = SPR[k];
+        if (!s) { if (emo) a.emo(emo, x, y, size); return false; }
+        opt = opt || {};
+        var im = s.img;
+        var fw = im.width / s.frames, fh = im.height;
+        var fi = s.frames > 1 ? (Math.floor(a.now * s.fps) % s.frames) : 0;
+        var w = size * (fw / fh), h = size;
+        g.save();
+        if (opt.alpha !== undefined) g.globalAlpha = opt.alpha;
+        g.translate(x, y);
+        if (opt.rot) g.rotate(opt.rot);
+        if (opt.flip) g.scale(-1, 1);
+        g.drawImage(im, fi * fw, 0, fw, fh, -w / 2, -h / 2, w, h);
+        g.restore();
+        return true;
+      },
+
+      /* วาดอิโมจิ (ของเดิม ย้ายมาไว้ใน engine เพื่อให้ทุกเกมเรียกได้) */
+      emo: function (ch, x, y, size) {
+        g.font = size + 'px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillStyle = '#fff';
+        g.fillText(ch, x, y);
+      },
+
       bg: function (c1, c2) {
+        /* ภาพพื้นหลังเฉพาะเกม (แยกแนวนอน/แนวตั้ง) มาก่อน BRAND.gameBg */
+        var k = (a.port && SPR.bgPort) ? 'bgPort' : (SPR.bg ? 'bg' : null);
+        if (k) { g.drawImage(SPR[k].img, 0, 0, W, H); return; }
         if (a.bgImg && a.bgImg.complete && a.bgImg.naturalWidth) {
           g.drawImage(a.bgImg, 0, 0, W, H);
           g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, 0, W, H); return;
@@ -392,7 +460,8 @@ window.MiniGame = (function () {
 
     $('#ovNext').onclick = function () { goTo(1); };
     $('#ovGo').onclick = function () { beep(660, .08); start(); };
-    showStart();
+    /* โหลดภาพประกอบของเกมนี้ก่อน แล้วค่อยแสดงหน้าเริ่มเกม */
+    loadSprites(meta.id, showStart);
   }
 
   return { register: function (id, d) { reg[id] = d; }, boot: boot };
