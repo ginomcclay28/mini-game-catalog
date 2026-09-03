@@ -70,6 +70,14 @@
 
   function t(k) { return T[lang][k]; }
 
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+  /* path ภาพการ์ดของเกมลำดับที่ no (1-100) — คืน null ถ้าปิดใช้ภาพใน brand.js */
+  function art(no) {
+    if (!BRAND.cardArt) return null;
+    return BRAND.cardArt + ('00' + no).slice(-3) + '.png';
+  }
+
   /* -------- filtered + sorted list -------- */
   function list() {
     var L = cat === 'all' ? GAMES.slice() : GAMES.filter(function (g) { return g.cat === cat; });
@@ -134,10 +142,12 @@
     for (var i = s; i < e; i++) {
       var g = L[i], d = g[lang];
       var no = GAMES.indexOf(g) + 1;
+      var src = art(no);
       html += '<article class="card" data-id="' + g.id + '">' +
-        '<div class="thumb" style="background:linear-gradient(140deg,' + g.c1 + ',' + g.c2 + ')">' +
+        '<div class="thumb' + (src ? ' has-art' : '') + '" style="background:linear-gradient(140deg,' + g.c1 + ',' + g.c2 + ')">' +
+        (src ? '<img class="art" src="' + src + '" alt="' + esc(d.name) + '" loading="lazy" decoding="async">'
+             : '<div class="ico">' + g.icon + '</div>') +
         '<span class="no">#' + (no < 10 ? '0' + no : no) + '</span>' +
-        '<div class="ico">' + g.icon + '</div>' +
         '<div class="play-ov"><span>▶</span></div>' +
         '</div>' +
         '<div class="cbody">' +
@@ -217,7 +227,16 @@
     if (idx < 0) return;
     current = idx;
     var g = GAMES[idx], d = g[lang];
-    $('#mHero').style.background = 'linear-gradient(140deg,' + g.c1 + ',' + g.c2 + ')';
+    var src = art(idx + 1), hero = $('#mHero'), aImg = $('#mArt'), aBg = $('#mArtBg');
+    hero.style.background = 'linear-gradient(140deg,' + g.c1 + ',' + g.c2 + ')';
+    hero.classList.toggle('has-art', !!src);
+    if (src) {
+      aImg.src = src; aImg.alt = d.name; aImg.hidden = false;
+      aBg.style.backgroundImage = 'url("' + src + '")';
+    } else {
+      aImg.hidden = true; aImg.removeAttribute('src');
+      aBg.style.backgroundImage = '';
+    }
     $('#mIco').textContent = g.icon;
     $('#mName').textContent = (idx + 1 < 10 ? '0' : '') + (idx + 1) + '. ' + d.name;
     $('#mTag').textContent = d.tag;

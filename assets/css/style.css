@@ -90,6 +90,13 @@ button{font-family:inherit;cursor:pointer;border:0}
   background:repeating-linear-gradient(45deg,rgba(255,255,255,.10) 0 14px,transparent 14px 28px);
 }
 .thumb .ico{font-size:60px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.28));z-index:1}
+/* ---- ภาพการ์ดจริง (BRAND.cardArt) ---- */
+.thumb.has-art{aspect-ratio:1/1}
+.thumb.has-art::after{display:none}       /* ไม่ต้องมีลายทแยงทับภาพ */
+.thumb .art{
+  position:absolute;inset:0;width:100%;height:100%;max-width:none;
+  object-fit:cover;display:block;z-index:1;
+}
 .thumb .no{
   position:absolute;top:10px;left:12px;z-index:2;color:#fff;font-weight:800;font-size:13px;
   background:rgba(0,0,0,.28);padding:4px 10px;border-radius:999px;backdrop-filter:blur(4px);
@@ -163,6 +170,21 @@ button{font-family:inherit;cursor:pointer;border:0}
 .m-hero{position:relative;height:210px;display:grid;place-items:center;flex:none}
 .m-hero::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.1) 0 16px,transparent 16px 32px)}
 .m-hero .ico{font-size:88px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.3));z-index:1}
+/* ---- ภาพการ์ดจริงในป๊อบอัพ: วางกลาง เห็นเต็มภาพ ฉากหลังใช้ภาพเดิมเบลอ ---- */
+.m-hero.has-art::after{display:none}
+.m-hero.has-art .ico{display:none}
+.m-art-bg{
+  position:absolute;inset:-30px;z-index:0;
+  background-size:cover;background-position:center;
+  filter:blur(28px) saturate(1.15);opacity:.6;
+}
+.m-art{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  height:100%;width:auto;max-width:none;object-fit:contain;z-index:1;display:block;
+}
+/* ต้องมี ไม่งั้น .m-art{display:block} จะชนะ [hidden] ของเบราว์เซอร์ */
+.m-art[hidden]{display:none}
+.m-hero:not(.has-art) .m-art-bg{display:none}
 .m-close{
   position:absolute;top:14px;right:14px;z-index:5;width:40px;height:40px;border-radius:50%;
   background:rgba(255,255,255,.92);color:var(--ink);font-size:20px;display:grid;place-items:center;

@@ -4,6 +4,7 @@ desktop.ini
 .DS_Store
 
 # ของที่ไม่ต้องขึ้น repo
+_backup/
 node_modules/
 shots-land/
 shots-port/
