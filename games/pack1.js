@@ -214,13 +214,13 @@
   R('catchfruit', {
     lives: 3,
     setup: function (a) {
-      a.data.hw = a.mn * .13;                 // ครึ่งความกว้างตะกร้า
+      a.data.hw = a.mn * .108;                // ครึ่งความกว้างตะกร้า
       /* ภาพตะกร้าสูงกว่ารูปทรงที่โค้ดวาดเดิม จึงต้องยกเส้นปากตะกร้าขึ้น
          ไม่งั้นก้นตะกร้าจะโดนขอบล่างจอตัด */
       a.data.by = a.hasSpr('basket')
-        ? a.H - a.mn * .25 - (a.port ? a.mn * .05 : 0)
+        ? a.H - a.mn * .22 - (a.port ? a.mn * .05 : 0)
         : a.H - a.mn * .11 - (a.port ? a.mn * .07 : 0);   // ระดับปากตะกร้า
-      a.data.is = a.mn * .085;                // ขนาดของที่ตก
+      a.data.is = a.mn * .115;                // ขนาดของที่ตก
       a.data.bx = a.W / 2; a.data.tx = a.W / 2; a.data.it = []; a.data.sp = .6;
       a.data.good = ['🍎', '🍊', '🍇', '🍓', '🍋', '🍉'];
     },
