@@ -63,9 +63,34 @@ window.MiniGame = (function () {
      ============================================================ */
   var SPR = {};        // key -> {img, frames, fps}
   var sprBase = '';
+  var tintCache = {};  // key|สี -> canvas ที่ย้อมสีไว้แล้ว
+
+  /* สถานะเอฟเฟกต์กลาง (จอสั่น / แฟลช / อนุภาค) */
+  var fx = [], shakeP = 0, shakeT = 0, flashC = '', flashT = 0, flashD = 1;
+  function resetFx() { fx = []; shakeP = shakeT = flashT = 0; }
+
+  function stepFx(dt) {
+    if (shakeT > 0) { shakeT -= dt; if (shakeT <= 0) shakeP = 0; }
+    if (flashT > 0) flashT -= dt;
+    for (var i = fx.length - 1; i >= 0; i--) {
+      var p = fx[i];
+      p.t -= dt;
+      if (p.t <= 0) { fx.splice(i, 1); continue; }
+      p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+    }
+  }
+  function drawFx() {
+    for (var i = 0; i < fx.length; i++) {
+      var p = fx[i];
+      g.globalAlpha = Math.max(0, Math.min(1, p.t / p.mx));
+      g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.2832);
+      g.fillStyle = p.c; g.fill();
+    }
+    g.globalAlpha = 1;
+  }
 
   function loadSprites(gameId, done) {
-    SPR = {};
+    SPR = {}; tintCache = {};
     var man = (window.GAME_SPRITES || {})[gameId];
     if (!man) return done();
     sprBase = 'assets/sprites/' + gameId + '/';
@@ -130,8 +155,38 @@ window.MiniGame = (function () {
         if (opt.alpha !== undefined) g.globalAlpha = opt.alpha;
         g.translate(x, y);
         if (opt.rot) g.rotate(opt.rot);
+        if (opt.sx || opt.sy) g.scale(opt.sx || 1, opt.sy || 1);   // ยืด/ยุบ
         if (opt.flip) g.scale(-1, 1);
         g.drawImage(im, fi * fw, 0, fw, fh, -w / 2, -h / 2, w, h);
+        g.restore();
+        return true;
+      },
+
+      /* วาดภาพขาวดำแล้วย้อมสี — ใช้กับภาพที่วาดมาเป็นสีขาว/เทา เช่นลูกโป่ง
+         ย้อมด้วย multiply เงาในภาพจึงยังอยู่ ไม่แบนเป็นสีเดียว
+         ผลลัพธ์ถูก cache ไว้ ย้อมสีละครั้งเดียวตลอดเกม */
+      sprTint: function (k, col, emo, x, y, size, opt) {
+        var s = SPR[k];
+        if (!s) { if (emo) a.emo(emo, x, y, size); return false; }
+        var ck = k + '|' + col, c = tintCache[ck];
+        if (!c) {
+          c = document.createElement('canvas');
+          c.width = s.img.width; c.height = s.img.height;
+          var cx = c.getContext('2d');
+          cx.drawImage(s.img, 0, 0);
+          cx.globalCompositeOperation = 'multiply';
+          cx.fillStyle = col; cx.fillRect(0, 0, c.width, c.height);
+          cx.globalCompositeOperation = 'destination-in';   // คืนความโปร่งเดิม
+          cx.drawImage(s.img, 0, 0);
+          tintCache[ck] = c;
+        }
+        opt = opt || {};
+        var w = size * (c.width / c.height), h = size;
+        g.save();
+        if (opt.alpha !== undefined) g.globalAlpha = opt.alpha;
+        g.translate(x, y);
+        if (opt.rot) g.rotate(opt.rot);
+        g.drawImage(c, -w / 2, -h / 2, w, h);
         g.restore();
         return true;
       },
@@ -182,6 +237,42 @@ window.MiniGame = (function () {
         g.fillText(s, W / 2, a.mn * .062);
       },
       circle: function (x, y, r, col) { g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fillStyle = col; g.fill(); },
+
+      /* ---------- เอฟเฟกต์กลาง ใช้ได้ทุกเกม ----------
+         engine จะอัปเดตและวาดให้เองหลัง draw() ของเกม ไม่ต้องจัดการเอง */
+
+      /* จอสั่น p = ความแรง (สัดส่วนของด้านสั้น) เช่น .012 = สั่นเบา  .03 = สั่นแรง */
+      shake: function (p, dur) { shakeP = Math.max(shakeP, p * a.mn); shakeT = Math.max(shakeT, dur || .28); },
+
+      /* แฟลชเต็มจอ */
+      flash: function (col, dur) { flashC = col; flashT = flashD = dur || .18; },
+
+      /* พ่นอนุภาค — ผงดิน เศษระเบิด ประกาย
+         opt: {n, col, size, spd, grav, life, spread} */
+      puff: function (x, y, opt) {
+        opt = opt || {};
+        var n = opt.n || 8, spd = opt.spd || a.mn * .5;
+        for (var i = 0; i < n; i++) {
+          var ang = opt.spread ? (-Math.PI / 2 + (Math.random() - .5) * opt.spread)
+                               : Math.random() * 6.2832;
+          var v = spd * (.4 + Math.random() * .8);
+          fx.push({
+            x: x, y: y, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v,
+            r: (opt.size || a.mn * .012) * (.6 + Math.random() * .8),
+            g: opt.grav === undefined ? a.mn * 2.2 : opt.grav,
+            t: opt.life || .5, mx: opt.life || .5,
+            c: opt.col || '#c98a56'
+          });
+        }
+      },
+
+      /* ตัวช่วยจังหวะ: เด้งเกินแล้วกลับ (ใช้กับตัวละครโผล่ขึ้นมา) */
+      pop: function (t) {          // t = 0..1
+        if (t >= 1) return 1;
+        return 1 + 2.7 * Math.pow(1 - t, 1.6) * Math.sin(t * 9.4);
+      },
+      /* ช้า-เร็ว-ช้า */
+      ease: function (t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; },
       shadow: function (on) {
         if (on) { g.shadowColor = 'rgba(0,0,0,.28)'; g.shadowBlur = 14; g.shadowOffsetY = 6; }
         else { g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0; }
@@ -252,12 +343,28 @@ window.MiniGame = (function () {
       if (api.timeLeft <= 0) { api.timeLeft = 0; stop(); return; }
     }
     if (def.update) def.update(dt, api);
-    if (running) { g.clearRect(0, 0, W, H); def.draw(g, api); }
+    stepFx(dt);
+    if (running) {
+      g.clearRect(0, 0, W, H);
+      var sx = 0, sy = 0;
+      if (shakeP > 0 && shakeT > 0) {          // จอสั่น ค่อย ๆ เบาลงตามเวลา
+        var k = shakeP * (shakeT / .28);
+        sx = (Math.random() - .5) * 2 * k; sy = (Math.random() - .5) * 2 * k;
+      }
+      g.save(); g.translate(sx, sy);
+      def.draw(g, api);
+      drawFx();
+      g.restore();
+      if (flashT > 0) {                        // แฟลชเต็มจอ วาดทับสุดท้าย ไม่โดนสั่น
+        g.globalAlpha = Math.max(0, flashT / flashD) * .55;
+        g.fillStyle = flashC; g.fillRect(0, 0, W, H); g.globalAlpha = 1;
+      }
+    }
     raf = requestAnimationFrame(frame);
   }
 
   function start() {
-    api = makeApi();
+    api = makeApi(); resetFx();
     var tm = (def.time !== undefined) ? def.time : (meta.time || 0);
     api.timeLeft = tm;
     $('#sTime').classList.toggle('hide', !tm);

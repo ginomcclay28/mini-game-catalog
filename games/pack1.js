@@ -25,7 +25,7 @@
     update: function (dt, a) {
       var d = a.data;
       d.holes.forEach(function (h) {
-        if (h.up) { h.life -= dt; if (h.life <= 0) h.up = 0; }
+        if (h.up) { h.life -= dt; h.t = (h.t || 0) + dt; if (h.life <= 0) { h.up = 0; h.t = 0; } }
         if (h.pop > 0) h.pop -= dt;
       });
       d.sp -= dt;
@@ -39,9 +39,16 @@
       var rx = a.data.rx;
       a.data.holes.forEach(function (h) {
         if (h.up && Math.hypot(x - h.x, y - (h.y - rx * .5)) < rx * .9) {
-          h.up = 0; h.pop = .35;
-          if (h.bomb) { a.add(-15); a.beep(120, .2, 'sawtooth'); }
-          else { a.add(10); a.beep(880, .08); }
+          h.up = 0; h.t = 0; h.pop = .35;
+          if (h.bomb) {
+            a.add(-15); a.beep(120, .2, 'sawtooth');
+            a.shake(.03, .38); a.flash('#ff4646', .22);
+            a.puff(h.x, h.y - rx * .4, { n: 16, col: '#2b2b3d', spd: a.mn * .8, size: a.mn * .016 });
+          } else {
+            a.add(10); a.beep(880, .08);
+            a.shake(.012, .22);
+            a.puff(h.x, h.y, { n: 10, col: '#c98a56', spread: 2.4 });
+          }
         }
       });
     },
@@ -59,10 +66,21 @@
         }
       });
       d.holes.forEach(function (h) {
-        if (h.up) a.spr(h.bomb ? 'bomb' : 'mole', h.bomb ? '💣' : '🐹', h.x, h.y - rx * .55, rx * 1.75);
+        if (h.up) {
+          /* 0.18 วิแรก = พุ่งขึ้นมาแบบเด้งเกินแล้วเข้าที่ จากนั้นแกว่งเบา ๆ รอโดนตี */
+          var t = Math.min(1, (h.t || 0) / .18);
+          var rise = a.ease(t);                       // 0..1 ระยะที่โผล่พ้นหลุม
+          var sy = 1 + (1 - t) * .35 * Math.cos((h.t || 0) * 22);   // ยืด/ยุบตอนโผล่
+          var sway = t >= 1 ? Math.sin((h.t || 0) * 3.4) * .05 : 0; // แกว่งตอนรอ
+          a.spr(h.bomb ? 'bomb' : 'mole', h.bomb ? '💣' : '🐹',
+                h.x, h.y - rx * .55 * rise, rx * 1.75,
+                { sy: sy, sx: 2 - sy, rot: sway });
+        }
         if (h.pop > 0) {
-          a.spr('hit', null, h.x, h.y - rx * .55, rx * 2.1, { alpha: Math.min(1, h.pop / .35) });
-          a.text(h.bomb ? '-15' : '+10', h.x, h.y - rx * 1.5, rx * .55, h.bomb ? a.C.bad : a.C.accent);
+          var k = h.pop / .35;                        // 1 -> 0
+          a.spr('hit', null, h.x, h.y - rx * .55, rx * 2.1 * (1.5 - k * .5), { alpha: k });
+          a.text(h.bomb ? '-15' : '+10', h.x, h.y - rx * (1.2 + (1 - k) * .8),
+                 rx * .55, h.bomb ? a.C.bad : a.C.accent);
         }
       });
       a.head(a.txt({ th: 'แตะตัวตุ่น • เลี่ยงระเบิด', en: 'Tap moles • avoid bombs' }));
@@ -96,6 +114,11 @@
           var p = b.k === 'gold' ? 50 : (b.k === 'spike' ? -20 : 10);
           a.add(p); a.beep(b.k === 'spike' ? 140 : 700, .1, b.k === 'spike' ? 'square' : 'sine');
           d.fx.push({ x: b.x, y: b.y, t: .5, p: (p > 0 ? '+' : '') + p, c: p > 0 ? a.C.accent : a.C.bad });
+          /* เศษยางกระเด็นเป็นสีของลูกโป่งใบนั้น */
+          a.puff(b.x, b.y, { n: b.k === 'spike' ? 18 : 12, col: b.k === 'gold' ? '#ffd75e' : b.c,
+                             spd: a.mn * .75, size: a.mn * .011, life: .45 });
+          if (b.k === 'spike') { a.shake(.022, .3); a.flash('#ff4646', .16); }
+          else a.shake(.008, .16);
           d.b.splice(i, 1); return;
         }
       }
@@ -108,13 +131,8 @@
         g.quadraticCurveTo(b.x + b.r * .3, b.y + b.r * 1.6, b.x, b.y + b.r * 2.3); g.stroke();
         var col = b.k === 'gold' ? '#ffd23f' : (b.k === 'spike' ? '#2b2b3d' : b.c);
         if (a.hasSpr('balloon')) {
-          /* ภาพลูกโป่งเป็นสีขาว เกมย้อมสีทับให้เข้ากับแบรนด์ */
-          g.save(); g.globalCompositeOperation = 'source-over';
-          a.spr('balloon', null, b.x, b.y, b.r * 2.2);
-          g.globalCompositeOperation = 'source-atop';
-          g.globalAlpha = .72; g.fillStyle = col;
-          g.fillRect(b.x - b.r * 1.3, b.y - b.r * 1.3, b.r * 2.6, b.r * 2.6);
-          g.restore();
+          /* ภาพลูกโป่งวาดมาเป็นสีขาว ย้อมสีตอนวาดให้เข้ากับแบรนด์ */
+          a.sprTint('balloon', col, null, b.x, b.y, b.r * 2.3, { rot: Math.sin(b.w) * .13 });
         } else {
           g.beginPath(); g.ellipse(b.x, b.y, b.r * .86, b.r, 0, 0, 6.29); g.fillStyle = col; g.fill();
           g.beginPath(); g.ellipse(b.x - b.r * .28, b.y - b.r * .32, b.r * .2, b.r * .3, -.4, 0, 6.29);
@@ -197,13 +215,18 @@
     lives: 3,
     setup: function (a) {
       a.data.hw = a.mn * .13;                 // ครึ่งความกว้างตะกร้า
-      a.data.by = a.H - a.mn * .11 - (a.port ? a.mn * .07 : 0);   // ระดับปากตะกร้า
+      /* ภาพตะกร้าสูงกว่ารูปทรงที่โค้ดวาดเดิม จึงต้องยกเส้นปากตะกร้าขึ้น
+         ไม่งั้นก้นตะกร้าจะโดนขอบล่างจอตัด */
+      a.data.by = a.hasSpr('basket')
+        ? a.H - a.mn * .25 - (a.port ? a.mn * .05 : 0)
+        : a.H - a.mn * .11 - (a.port ? a.mn * .07 : 0);   // ระดับปากตะกร้า
       a.data.is = a.mn * .085;                // ขนาดของที่ตก
       a.data.bx = a.W / 2; a.data.tx = a.W / 2; a.data.it = []; a.data.sp = .6;
       a.data.good = ['🍎', '🍊', '🍇', '🍓', '🍋', '🍉'];
     },
     update: function (dt, a) {
       var d = a.data;
+      d.bump = Math.max(0, (d.bump || 0) - dt);      // ตะกร้าเด้งตอนเพิ่งรับของ
       d.bx += (d.tx - d.bx) * Math.min(1, dt * 14);
       d.sp -= dt;
       if (d.sp <= 0) {
@@ -215,8 +238,16 @@
         var o = d.it[i]; o.y += o.v * dt; o.sp += dt * 3;
         if (o.y > d.by - a.mn * .06 && o.y < d.by + a.mn * .05 && Math.abs(o.x - d.bx) < d.hw + d.is * .3) {
           d.it.splice(i, 1);
-          if (o.b) { a.beep(120, .22, 'sawtooth'); a.loseLife(); }
-          else { a.add(10); a.beep(880, .07); }
+          d.bump = .22;                                  // ตะกร้าเด้ง
+          if (o.b) {
+            a.beep(120, .22, 'sawtooth'); a.loseLife();
+            a.shake(.03, .38); a.flash('#ff4646', .22);
+            a.puff(o.x, d.by, { n: 16, col: '#2b2b3d', spd: a.mn * .8, size: a.mn * .015 });
+          } else {
+            a.add(10); a.beep(880, .07);
+            a.shake(.01, .18);
+            a.puff(o.x, d.by, { n: 8, col: a.C.accent, spread: 2.2, spd: a.mn * .45, size: a.mn * .009, life: .4 });
+          }
         } else if (o.y > a.H + d.is) d.it.splice(i, 1);
       }
     },
@@ -234,7 +265,10 @@
       });
       var bx = d.bx, by = d.by, hw = d.hw, bh = a.mn * .10;
       if (a.hasSpr('basket')) {
-        a.spr('basket', null, bx, by + bh * .5, bh * 1.6);
+        /* ให้ความกว้างภาพพอดีกับกรอบรับของ (hw*2) แล้วเผื่อขอบตะกร้าอีกนิด
+           ปากตะกร้าในภาพอยู่ค่อนบน จึงเลื่อนจุดกึ่งกลางลงมา by + hw*.8 */
+        var bp = 1 + Math.sin(Math.min(1, (d.bump || 0) / .22) * Math.PI) * .12;
+        a.spr('basket', null, bx, by + hw * .82, hw * 2.5, { sx: bp, sy: 2 - bp });
       } else {
         a.shadow(true);
         g.beginPath(); g.moveTo(bx - hw, by); g.lineTo(bx + hw, by);
