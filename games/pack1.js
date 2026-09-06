@@ -151,7 +151,10 @@
   /* ---------- 03 จับคู่การ์ด ---------- */
   R('memory', {
     setup: function (a) {
-      var faces = ['🍎', '🍌', '🍇', '🍓', '🍉', '🍍'];
+      /* หน้าการ์ด 6 แบบ  k = คีย์ภาพ, e = อิโมจิสำรองตอนยังไม่มีไฟล์
+         ตัวออบเจ็กต์เองถูกใช้เป็น "ตัวระบุคู่" เทียบกันตรง ๆ ด้วย === */
+      var faces = [{ k: 'i1', e: '🚀' }, { k: 'i2', e: '🪐' }, { k: 'i3', e: '🌙' },
+                   { k: 'i4', e: '👽' }, { k: 'i5', e: '🛸' }, { k: 'i6', e: '☄️' }];
       var cols = a.port ? 3 : 4, rows = a.port ? 4 : 3;
       var top = a.mn * .14;
       var cell = Math.min((a.W - a.mn * .10) / cols, (a.H - top - a.mn * .08) / rows);
@@ -161,18 +164,27 @@
         oy: top + (a.H - top - rows * cell) / 2 + cell * .06
       };
       var deck = a.shuffle(faces.concat(faces));
-      a.data.c = deck.map(function (f, i) { return { f: f, r: Math.floor(i / cols), col: i % cols, st: 0 }; });
+      a.data.c = deck.map(function (f, i) { return { f: f, r: Math.floor(i / cols), col: i % cols, st: 0, ag: 9 }; });
       a.data.open = []; a.data.lock = 0; a.data.left = 6;
     },
     update: function (dt, a) {
       var d = a.data;
+      d.c.forEach(function (c) { c.ag += dt; });        // อายุตั้งแต่พลิกล่าสุด ใช้ทำอนิเมชัน
       if (d.lock > 0) {
         d.lock -= dt;
         if (d.lock <= 0) {
           if (d.open[0].f === d.open[1].f) {
-            d.open[0].st = 2; d.open[1].st = 2; a.add(20); d.left--; a.beep(900, .12);
-            if (!d.left) a.end(a.txt({ th: 'จับคู่ครบแล้ว!', en: 'All matched!' }));
-          } else { d.open[0].st = 0; d.open[1].st = 0; a.beep(200, .1, 'square'); }
+            d.open.forEach(function (c) {
+              c.st = 2; c.ag = 0;
+              var b = cbox(a, c);
+              a.puff(b.x + b.s / 2, b.y + b.s / 2, { n: 10, col: '#2fe08a', spread: 3.14, spd: b.s * 1.1, size: b.s * .05, life: .45 });
+            });
+            a.add(20); d.left--; a.beep(900, .12); a.shake(.008, .16);
+            if (!d.left) { a.flash('#2fe08a', .22); a.end(a.txt({ th: 'จับคู่ครบแล้ว!', en: 'All matched!' })); }
+          } else {
+            d.open.forEach(function (c) { c.st = 0; c.ag = 0; });
+            a.beep(200, .1, 'square');
+          }
           d.open = [];
         }
       }
@@ -182,7 +194,7 @@
       d.c.forEach(function (c) {
         var b = cbox(a, c);
         if (c.st === 0 && x > b.x && x < b.x + b.s && y > b.y && y < b.y + b.s) {
-          c.st = 1; d.open.push(c); a.beep(520, .06);
+          c.st = 1; c.ag = 0; d.open.push(c); a.beep(520, .06);
           if (d.open.length === 2) d.lock = .65;
         }
       });
@@ -191,16 +203,25 @@
       a.bg('#2b1b6b', '#0f3f77');
       var L = a.data.LO;
       a.data.c.forEach(function (c) {
-        var b = cbox(a, c), s = b.s;
+        var b = cbox(a, c), s = b.s, cx = b.x + s / 2, cy = b.y + s / 2;
+        /* พลิกการ์ด: ด้านใหม่กางออกจากสันกลาง 0 -> 1 ใน 0.18 วิ */
+        var fl = Math.max(.06, a.ease(Math.min(1, c.ag / .18)));
+        var pp = c.st === 2 ? a.pop(Math.min(1, c.ag / .45)) : 1;   // เด้งตอนจับคู่ได้
+        g.save(); g.translate(cx, cy); g.scale(fl * pp, pp); g.translate(-cx, -cy);
         if (c.st === 0) {
-          a.fillRR(b.x, b.y, s, s, s * .11, '#ff2e88');
-          g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = Math.max(2, s * .022);
-          a.rr(b.x + s * .08, b.y + s * .08, s * .84, s * .84, s * .07); g.stroke();
-          a.text('?', b.x + s / 2, b.y + s / 2, s * .38, 'rgba(255,255,255,.85)');
+          if (!a.spr('back', null, cx, cy, s)) {
+            a.fillRR(b.x, b.y, s, s, s * .11, '#ff2e88');
+            g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = Math.max(2, s * .022);
+            a.rr(b.x + s * .08, b.y + s * .08, s * .84, s * .84, s * .07); g.stroke();
+            a.text('?', cx, cy, s * .38, 'rgba(255,255,255,.85)');
+          }
         } else {
-          a.fillRR(b.x, b.y, s, s, s * .11, c.st === 2 ? '#2fe08a' : '#ffffff');
-          EM(g, c.f, b.x + s / 2, b.y + s / 2, s * .48);
+          var open = c.st === 1;
+          a.fillRR(b.x, b.y, s, s, s * .11, open ? '#ffd23f' : '#2fe08a');
+          a.fillRR(b.x + s * .08, b.y + s * .08, s * .84, s * .84, s * .07, '#ffffff');
+          a.spr(c.f.k, c.f.e, cx, cy, s * .62);
         }
+        g.restore();
       });
       a.head(a.txt({ th: 'พลิกการ์ดหาคู่ที่เหมือนกัน', en: 'Flip the cards, find the pairs' }));
     }
