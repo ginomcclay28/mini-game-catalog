@@ -59,6 +59,15 @@ window.GAME_SPRITES = {
     bomb:   'bomb.png',     // ระเบิด ห้ามรับ
     bg:     'bg.jpg',
     bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 05 กดเร็วจี๊ด ---------- */
+  tapspeed: {
+    btn:     'btn.png',      // ปุ่มยักษ์ ตอนยังไม่กด  เปลี่ยนเป็นโลโก้/สินค้าลูกค้าได้
+    btnDown: 'btn-down.png', // ปุ่มตอนถูกกดยุบลง
+    burst:   'burst.png',    // แสงระเบิดหลังปุ่ม (ไม่ใส่ก็ได้)
+    bg:     'bg.jpg',
+    bgPort: 'bg-port.jpg'
   }
 
 };

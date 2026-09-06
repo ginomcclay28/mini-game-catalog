@@ -306,13 +306,18 @@
     setup: function (a) { a.data.p = 0; a.data.rip = []; a.data.R = Math.min(a.W * .32, a.H * .24); a.data.cy = a.H * .46; },
     update: function (dt, a) {
       var d = a.data; d.p = Math.max(0, d.p - dt * .9);
+      d.pt = Math.max(0, (d.pt || 0) - dt);          // เวลาที่ปุ่มยังยุบอยู่
+      d.bt = Math.max(0, (d.bt || 0) - dt);          // เวลาที่แสงระเบิดยังค้าง
       d.rip.forEach(function (r) { r.t -= dt; }); d.rip = d.rip.filter(function (r) { return r.t > 0; });
     },
     down: function (x, y, a) {
       var d = a.data;
       if (Math.hypot(x - a.W / 2, y - d.cy) < d.R * 1.16) {
         a.add(1); d.p = Math.min(1, d.p + .075); d.rip.push({ t: .45 });
+        d.pt = .085; d.bt = .16;
         a.beep(500 + a.score * 4, .05, 'triangle');
+        a.shake(.004, .1);
+        a.puff(a.W / 2, d.cy, { n: 4, col: a.C.accent, spread: 3.14, spd: d.R * 2.2, size: d.R * .05, life: .32 });
       }
     },
     draw: function (g, a) {
@@ -322,10 +327,21 @@
         g.globalAlpha = r.t * 1.6; g.strokeStyle = '#fff'; g.lineWidth = a.mn * .009;
         g.beginPath(); g.arc(cx, cy, R2 * 1.03 + (0.45 - r.t) * R2 * 1.2, 0, 6.29); g.stroke(); g.globalAlpha = 1;
       });
-      a.shadow(true); a.circle(cx, cy, R2 + d.p * a.mn * .02, '#ffffff'); a.shadow(false);
-      a.circle(cx, cy, R2 * .86 + d.p * a.mn * .018, a.C.primary);
-      a.text('TAP!', cx, cy - R2 * .08, R2 * .40, '#fff');
-      a.text(a.score + '', cx, cy + R2 * .30, R2 * .22, 'rgba(255,255,255,.85)');
+      if (a.hasSpr('btn')) {
+        /* แสงระเบิดหลังปุ่ม โผล่ตอนกด แล้วขยาย+จางหายไป */
+        var bt = (d.bt || 0) / .16;
+        if (bt > 0) a.spr('burst', null, cx, cy, R2 * (2.9 + (1 - bt) * .8), { alpha: bt * .9, rot: (d.rip.length % 4) * .4 });
+        /* กดค้าง = สลับไปใช้ภาพปุ่มยุบ (สองภาพจัดก้นฐานตรงกันไว้แล้ว ไม่ต้องเลื่อน) */
+        var down = (d.pt || 0) > 0, sq = 1 + d.p * .04;
+        if (!a.spr(down ? 'btnDown' : 'btn', null, cx, cy, R2 * 2.15 * sq))
+          a.spr('btn', null, cx, cy, R2 * 2.15 * sq);
+        a.text(a.score + '', cx, cy - R2 * .12 + (down ? R2 * .04 : 0), R2 * .42, '#ffffff');
+      } else {
+        a.shadow(true); a.circle(cx, cy, R2 + d.p * a.mn * .02, '#ffffff'); a.shadow(false);
+        a.circle(cx, cy, R2 * .86 + d.p * a.mn * .018, a.C.primary);
+        a.text('TAP!', cx, cy - R2 * .08, R2 * .40, '#fff');
+        a.text(a.score + '', cx, cy + R2 * .30, R2 * .22, 'rgba(255,255,255,.85)');
+      }
       var bw = a.W * .62, bx = (a.W - bw) / 2, by = a.H - a.mn * .13, bh = a.mn * .038;
       a.fillRR(bx, by, bw, bh, bh / 2, 'rgba(0,0,0,.28)');
       a.fillRR(bx + bh * .16, by + bh * .16, (bw - bh * .32) * d.p, bh * .68, bh * .34, a.C.accent);
