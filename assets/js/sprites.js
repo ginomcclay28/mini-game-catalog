@@ -215,6 +215,68 @@ window.GAME_SPRITES = {
     i8: 'i8.png',   // กระบองเพชร
     bg:     'bg.jpg',
     bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 21 แยกประเภทลงถัง (ธีมรีไซเคิล) ---------- */
+  sortbin: {
+    binPlastic: 'bin-plastic.png', binFood: 'bin-food.png', binPaper: 'bin-paper.png',
+    plastic1: 'plastic1.png', plastic2: 'plastic2.png', plastic3: 'plastic3.png',
+    food1: 'food1.png', food2: 'food2.png', food3: 'food3.png',
+    paper1: 'paper1.png', paper2: 'paper2.png', paper3: 'paper3.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 22 วางบล็อกซ้อน ---------- */
+  stack: {
+    block: 'block.png',   // บล็อกขาว/เทา แท่งยาว  เกมย้อมสีทีละชั้นและยืดตามความกว้าง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 23 หยุดเข็มให้ตรงกลาง ---------- */
+  timingbar: {
+    needle: 'needle.png',   // เข็มชี้ ปลายลง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 24 กดแถบดนตรี ---------- */
+  pianotiles: { bg: 'bg.jpg', bgPort: 'bg-port.jpg' },
+
+  /* ---------- 25 งูกินหาง ---------- */
+  snake: {
+    head: 'head.png',   // หัวงู หันขวา เกมหมุนตามทิศเอง
+    body: 'body.png',   // ลำตัว 1 ปล้อง กลม ๆ
+    food: 'food.png',   // อาหาร  เปลี่ยนเป็นสินค้าได้
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 26 โอเอกซ์ ---------- */
+  tictactoe: {
+    o: 'o.png',   // ตัว O (ผู้เล่น)  เปลี่ยนเป็นโลโก้ได้
+    x: 'x.png',   // ตัว X (คอม)
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 27 เรียงตัวอักษร ---------- */
+  wordscramble: {
+    tile: 'tile.png',   // แผ่นตัวอักษร ขาว/เทา เกมย้อมสีเอง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 28 คิดเลขเร็ว ---------- */
+  mathquick: { bg: 'bg.jpg', bgPort: 'bg-port.jpg' },
+
+  /* ---------- 29 เลือกกล่องของขวัญ ---------- */
+  giftpick: {
+    box:     'box.png',        // กล่องปิด
+    boxOpen: 'box-open.png',   // กล่องเปิดมีแสงพุ่ง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 30 หาของที่ซ่อน ---------- */
+  hiddenobj: {
+    t1: 't1.png', t2: 't2.png', t3: 't3.png', t4: 't4.png',   // ตุ๊กตาหมี หุ่นยนต์ เป็ดยาง ลูกบอล
+    t5: 't5.png', t6: 't6.png', t7: 't7.png', t8: 't8.png',   // จรวด ไดโนเสาร์ รถ กลอง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   }
 
 };
