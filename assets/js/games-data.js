@@ -320,11 +320,11 @@ window.GAMES = [
   devices: ["touch","kiosk","tablet","mobile","pc"],
   th: { name: "งูกินหาง",
     tag: "ปัดนิ้วบังคับทิศ กินของให้ยาวขึ้น",
-    how: ["ปัดนิ้วขึ้น/ลง/ซ้าย/ขวาเพื่อเปลี่ยนทิศ","กินอาหาร +10 คะแนน ตัวยาวขึ้น 1 ช่อง","ชนกำแพงหรือชนตัวเองจบเกม","เล่นได้ทั้งปัดนิ้วและปุ่มลูกศร"],
+    how: ["ปัดนิ้วขึ้น/ลง/ซ้าย/ขวาเพื่อเปลี่ยนทิศ","กินอาหาร +10 คะแนน ตัวยาวขึ้น 1 ช่อง","วิ่งทะลุขอบจอไปโผล่อีกด้านได้ ชนตัวเองเท่านั้นที่จบเกม","เล่นได้ทั้งปัดนิ้วและปุ่มลูกศร"],
     custom: ["เปลี่ยนสีตัวงู/หัวงู","เปลี่ยนอาหารเป็นสินค้า","เปลี่ยนสีตาราง","ใส่โลโก้พื้นหลังสนาม"] },
   en: { name: "Snake",
     tag: "Swipe to steer, eat and grow",
-    how: ["Swipe up/down/left/right to turn","Each pickup: +10 points and one more segment","Hitting a wall or yourself ends it","Works with swipe or arrow keys"],
+    how: ["Swipe up/down/left/right to turn","Each pickup: +10 points and one more segment","Edges wrap around — only biting yourself ends it","Works with swipe or arrow keys"],
     custom: ["Snake body / head colors","Food → your product","Grid color","Logo watermark on the field"] }
 },
 {

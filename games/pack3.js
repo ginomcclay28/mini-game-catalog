@@ -79,7 +79,7 @@
 
   /* ---------- 22 วางบล็อกซ้อน ----------
      BLK = สัดส่วน กว้าง:สูง ของภาพบล็อก (วัดจากไฟล์จริง) */
-  var BLK = 3.831;
+  var BLK = 4.5;
   R('stack', {
     time: 0,
     setup: function (a) {
@@ -196,7 +196,7 @@
     lives: 3,
     setup: function (a) {
       a.data.LO = { lw: a.W / 4, th: Math.max(a.mn * .21, a.W / 4 * .55), sp0: a.mn * .45 };
-      a.data.t = []; a.data.sp = a.data.LO.sp0; a.data.next = 0; a.data.hitfx = [];
+      a.data.t = []; a.data.sp = a.data.LO.sp0; a.data.next = 0; a.data.hitfx = []; a.data.ni = -1;
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
@@ -210,15 +210,23 @@
     },
     down: function (x, y, a) {
       var d = a.data, L = d.LO, l = Math.floor(x / L.lw);
-      for (var i = d.t.length - 1; i >= 0; i--) {
+      /* เลือกแถบ "ล่างสุด" ในเลนนั้น (y มากสุด) — ของเดิมไล่จากท้ายอาร์เรย์ = แถบที่เพิ่งเกิดบนสุด
+         ทำให้เวลาเลนเดียวกันมี 2 แถบ กดแล้วแถบบนหาย แถบล่างตกพ้นจอกลายเป็นพลาด */
+      var best = -1, by = -Infinity;
+      for (var i = 0; i < d.t.length; i++) {
         var t = d.t[i];
-        if (t.l === l && t.y + L.th > 0 && t.y < a.H) {
-          d.t.splice(i, 1); a.add(10); a.beep([392, 494, 587, 698][l], .12, 'triangle');
-          d.hitfx.push({ l: l, t: .3 });
-          a.puff(l * L.lw + L.lw / 2, Math.min(a.H - a.mn * .1, t.y + L.th / 2),
-                 { n: 8, col: ['#ff2e88', '#00d4ff', '#ffd23f', '#2fe08a'][l], spread: 2.4, spd: L.lw * 1.8, size: L.lw * .05, life: .4 });
-          return;
-        }
+        if (t.l === l && t.y + L.th > 0 && t.y < a.H && t.y > by) { by = t.y; best = i; }
+      }
+      if (best >= 0) {
+        var hit = d.t[best]; d.t.splice(best, 1); a.add(10);
+        /* เสียง โด เร มี ฟา ซอล ไล่ขึ้นทีละโน้ตทุกครั้งที่กดถูก แล้ววนใหม่ */
+        var NOTES = [523.25, 587.33, 659.25, 698.46, 783.99];
+        d.ni = ((d.ni || 0) + 1) % NOTES.length;
+        a.beep(NOTES[d.ni], .18, 'triangle');
+        d.hitfx.push({ l: l, t: .3 });
+        a.puff(l * L.lw + L.lw / 2, Math.min(a.H - a.mn * .1, hit.y + L.th / 2),
+               { n: 8, col: ['#ff2e88', '#00d4ff', '#ffd23f', '#2fe08a'][l], spread: 2.4, spd: L.lw * 1.8, size: L.lw * .05, life: .4 });
+        return;
       }
       a.beep(150, .12, 'square'); a.add(-5);
     },
@@ -263,7 +271,8 @@
       if (d.acc < d.step) return; d.acc = 0;
       d.d = d.nd;
       var h = [d.s[0][0] + d.d[0], d.s[0][1] + d.d[1]];
-      if (h[0] < 0 || h[1] < 0 || h[0] >= L.cols || h[1] >= L.rows) { a.beep(130, .3, 'sawtooth'); a.shake(.03, .4); a.flash('#ff4646', .3); return a.end(); }
+      /* ทะลุขอบ: ออกด้านหนึ่ง โผล่อีกด้าน */
+      h[0] = (h[0] + L.cols) % L.cols; h[1] = (h[1] + L.rows) % L.rows;
       for (var i = 0; i < d.s.length; i++) if (d.s[i][0] === h[0] && d.s[i][1] === h[1]) { a.beep(130, .3, 'sawtooth'); a.shake(.03, .4); a.flash('#ff4646', .3); return a.end(); }
       d.s.unshift(h);
       if (h[0] === d.f[0] && h[1] === d.f[1]) {
@@ -306,7 +315,7 @@
           a.fillRR(px - cs * .42, py - cs * .42, cs * .84, cs * .84, cs * .2, a.C.good);
         }
       }
-      a.head(a.txt({ th: 'ปัดนิ้วเพื่อเปลี่ยนทิศ', en: 'Swipe to steer' }));
+      a.head(a.txt({ th: 'ปัดนิ้วเพื่อเปลี่ยนทิศ • ทะลุขอบได้', en: 'Swipe to steer • edges wrap around' }));
     }
   });
   function turn(a, nd) { var d = a.data.d; if (nd[0] === -d[0] && nd[1] === -d[1]) return; a.data.nd = nd; }
