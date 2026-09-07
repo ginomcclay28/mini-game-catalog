@@ -277,6 +277,65 @@ window.GAME_SPRITES = {
     t1: 't1.png', t2: 't2.png', t3: 't3.png', t4: 't4.png',   // ตุ๊กตาหมี หุ่นยนต์ เป็ดยาง ลูกบอล
     t5: 't5.png', t6: 't6.png', t7: 't7.png', t8: 't8.png',   // จรวด ไดโนเสาร์ รถ กลอง
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 31 ปาดผลไม้ ----------  ผลไม้ 5 ชนิด + ระเบิด คัดลอกมาจากเกม 04 (สไตล์เดียวกัน) */
+  fruitninja: {
+    melon: 'watermelon.png', apple: 'apple.png', orange: 'orange.png', grape: 'grape.png', straw: 'strawberry.png',
+    kiwi: 'kiwi.png', pine: 'pineapple.png', bomb: 'bomb.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 32 บีบพลาสติกกันกระแทก ---------- */
+  bubblewrap: {
+    bubble: 'bubble.png',   // เม็ดยังไม่แตก
+    popped: 'popped.png',   // เม็ดที่แตกแล้ว
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 33 หลบอุกกาบาต ---------- */
+  dodgerock: {
+    ship: 'ship.png',   // ยาน หัวชี้ขึ้น  เปลี่ยนเป็นมาสคอตได้
+    rock: 'rock.png',   // อุกกาบาต
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 34 สลับเลน ----------  ถนนวาดด้วยโค้ด พื้นหลังคือข้างทาง */
+  laneswitch: {
+    car:  'car.png',    // รถ มองจากบน หัวชี้ขึ้น
+    cone: 'cone.png',   // กรวยจราจร (สิ่งกีดขวาง)
+    coin: 'coin.png',   // เหรียญ  เปลี่ยนเป็นโลโก้ได้
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 35 ผ่านวงสี ---------- */
+  colorswitch: {
+    ball: 'ball.png',   // ลูกบอลขาว/เทา เกมย้อมสีตามสีที่ต้องผ่าน
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 36 แตะให้ตรงวง ---------- */
+  rhythmring: { bg: 'bg.jpg', bgPort: 'bg-port.jpg' },
+
+  /* ---------- 37 กดสีให้ตรงกฎ ---------- */
+  colorrule: { bg: 'bg.jpg', bgPort: 'bg-port.jpg' },
+
+  /* ---------- 38 เดาะบอล ---------- */
+  juggle: {
+    ball: 'ball.png',   // ลูกฟุตบอล  เปลี่ยนเป็นสินค้าได้
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 39 บินลอดอุโมงค์ ---------- */
+  tunnelfly: {
+    plane: 'plane.png',   // เครื่องบิน หันขวา
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 40 ซิกแซก ---------- */
+  zigzag: {
+    ball: 'ball.png',   // ลูกบอลที่กลิ้ง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   }
 
 };
