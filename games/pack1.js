@@ -355,27 +355,52 @@
     setup: function (a) { a.data.st = 'wait'; a.data.t = a.rnd(1.2, 3.2); a.data.round = 1; a.data.msg = ''; a.data.list = []; },
     update: function (dt, a) {
       var d = a.data;
-      if (d.st === 'wait') { d.t -= dt; if (d.t <= 0) { d.st = 'go'; d.t = 0; a.beep(900, .1); } }
+      if (d.st === 'wait') {
+        d.t -= dt;
+        if (d.t <= 0) {
+          d.st = 'go'; d.t = 0; a.beep(900, .1);
+          /* จังหวะไฟเขียวติด ให้ประกายกระเด็นรอบดวงไฟ จะได้สะดุดตาจากไกล ๆ */
+          a.puff(a.W / 2, a.H * .48, { n: 14, col: '#eaffef', spread: 3.14, spd: a.mn * 1.1, size: a.mn * .012, life: .5 });
+        }
+      }
       else if (d.st === 'go') d.t += dt;
       else if (d.st === 'res') { d.t -= dt; if (d.t <= 0) nextR(a); }
     },
     down: function (x, y, a) {
       var d = a.data;
-      if (d.st === 'wait') { d.msg = a.txt({ th: 'เร็วไป! ฟาวล์', en: 'Too early!' }); d.list.push(null); d.st = 'res'; d.t = 1.2; a.beep(140, .25, 'square'); }
+      if (d.st === 'wait') {
+        d.msg = a.txt({ th: 'เร็วไป! ฟาวล์', en: 'Too early!' }); d.list.push(null); d.st = 'res'; d.t = 1.2;
+        a.beep(140, .25, 'square'); a.shake(.028, .34); a.flash('#ff4646', .2);
+      }
       else if (d.st === 'go') {
         var ms = Math.round(d.t * 1000);
         d.list.push(ms); a.add(Math.max(0, 600 - ms));
         d.msg = ms + ' ms'; d.st = 'res'; d.t = 1.2; a.beep(1000, .1);
+        a.shake(.012, .2);
+        a.puff(a.W / 2, a.H * .48, { n: 10, col: '#ffffff', spread: 3.14, spd: a.mn * .8, size: a.mn * .011, life: .4 });
       }
     },
     draw: function (g, a) {
       var d = a.data;
       g.fillStyle = d.st === 'go' ? a.C.good : (d.st === 'wait' ? '#c9302c' : '#2b2350');
       g.fillRect(0, 0, a.W, a.H);
+      /* ลายแสงคอมิกจาง ๆ ทับสีพื้น สีพื้นยังเป็นตัวบอกสถานะเหมือนเดิม */
+      if (a.hasSpr('rays')) a.spr('rays', null, a.W / 2, a.H * .43, Math.hypot(a.W, a.H),
+        { alpha: d.st === 'go' ? .3 : .16, rot: a.now * .06 });
       a.text(a.txt({ th: 'รอบที่ ', en: 'Round ' }) + d.round + ' / 5', a.W / 2, a.mn * .08, a.mn * .038, 'rgba(255,255,255,.75)');
-      if (d.st === 'wait') { EM(g, '✋', a.W / 2, a.H * .44, a.mn * .17); a.text(a.txt({ th: 'รอ... อย่าเพิ่งแตะ', en: 'Wait for green…' }), a.W / 2, a.H * .62, a.mn * .055, '#fff'); }
-      else if (d.st === 'go') { EM(g, '👆', a.W / 2, a.H * .44, a.mn * .17); a.text(a.txt({ th: 'แตะเลย!', en: 'TAP NOW!' }), a.W / 2, a.H * .62, a.mn * .08, '#fff'); }
-      else a.text(d.msg, a.W / 2, a.H / 2, a.mn * .09, '#fff');
+      var art = a.hasSpr('lightRed'), ly = a.H * .43, ty = art ? a.H * .82 : a.H * .62;
+      if (art) {
+        var key = d.st === 'go' ? 'lightGreen' : (d.st === 'wait' ? 'lightRed' : 'lightOff');
+        var pp = d.st === 'go' ? a.pop(Math.min(1, d.t / .35)) : 1;   // เด้งตอนไฟเขียวติด
+        a.spr(key, null, a.W / 2, ly, a.mn * .58 * pp);
+      }
+      if (d.st === 'wait') {
+        if (!art) EM(g, '✋', a.W / 2, a.H * .44, a.mn * .17);
+        a.text(a.txt({ th: 'รอ... อย่าเพิ่งแตะ', en: 'Wait for green…' }), a.W / 2, ty, a.mn * .055, '#fff');
+      } else if (d.st === 'go') {
+        if (!art) EM(g, '👆', a.W / 2, a.H * .44, a.mn * .17);
+        a.text(a.txt({ th: 'แตะเลย!', en: 'TAP NOW!' }), a.W / 2, ty, a.mn * .08, '#fff');
+      } else a.text(d.msg, a.W / 2, art ? ty : a.H / 2, a.mn * .09, '#fff');
     }
   });
   function nextR(a) {
