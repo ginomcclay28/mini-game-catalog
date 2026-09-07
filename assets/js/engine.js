@@ -173,6 +173,9 @@ window.MiniGame = (function () {
         if (!s) { if (emo) a.emo(emo, x, y, size); return false; }
         var ck = k + '|' + col, c = tintCache[ck];
         if (!c) {
+          /* เกมที่สุ่มสีใหม่ทุกรอบจะทำให้แคชโตไม่หยุด (แผ่นละ ~1 MB)
+             เกิน 32 สีเมื่อไหร่ ล้างทิ้งแล้วเริ่มใหม่ */
+          if (Object.keys(tintCache).length > 32) tintCache = {};
           c = document.createElement('canvas');
           c.width = s.img.width; c.height = s.img.height;
           var cx = c.getContext('2d');
@@ -189,6 +192,7 @@ window.MiniGame = (function () {
         if (opt.alpha !== undefined) g.globalAlpha = opt.alpha;
         g.translate(x, y);
         if (opt.rot) g.rotate(opt.rot);
+        if (opt.sx || opt.sy) g.scale(opt.sx || 1, opt.sy || 1);   // ยืด/ยุบ
         g.drawImage(c, -w / 2, -h / 2, w, h);
         g.restore();
         return true;
