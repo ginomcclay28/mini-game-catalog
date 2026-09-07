@@ -280,13 +280,13 @@
         var ox = L.rx + L.lw * (o.lane + .5);
         if (o.coin) {
           var sp = 1 + Math.sin(a.now * 8 + o.y) * .08;   // เหรียญวิบวับ
-          if (!a.spr('coin', null, ox, o.y, L.sz * .8, { sx: sp })) { a.circle(ox, o.y, L.sz * .38, a.C.accent); a.text('★', ox, o.y, L.sz * .34, '#8a6a00'); }
+          if (!a.spr('coin', null, ox, o.y, L.sz * 1.6, { sx: sp })) { a.circle(ox, o.y, L.sz * .38, a.C.accent); a.text('★', ox, o.y, L.sz * .34, '#8a6a00'); }
         }
-        else if (!a.spr('cone', null, ox, o.y, L.sz * 1.0)) a.fillRR(ox - L.sz * .45, o.y - L.sz * .45, L.sz * .9, L.sz * .9, L.sz * .15, a.C.bad);
+        else if (!a.spr('cone', null, ox, o.y, L.sz * 2.0)) a.fillRR(ox - L.sz * .45, o.y - L.sz * .45, L.sz * .9, L.sz * .9, L.sz * .15, a.C.bad);
       });
       /* รถเอียงตอนเปลี่ยนเลน */
       var tx0 = L.rx + L.lw * (d.lane + .5), tilt = Math.max(-.3, Math.min(.3, (tx0 - d.px) * .004));
-      if (!a.spr('car', null, d.px, L.py, L.sz * 1.5, { rot: tilt })) EM(g, '🏎️', d.px, L.py, L.sz * 1.15);
+      if (!a.spr('car', null, d.px, L.py, L.sz * 3.0, { rot: tilt })) EM(g, '🏎️', d.px, L.py, L.sz * 1.15);
       a.head(a.txt({ th: 'ลากนิ้วซ้าย-ขวาเพื่อเปลี่ยนเลน', en: 'Drag left or right to change lane' }));
     }
   });
