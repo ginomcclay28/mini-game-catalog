@@ -647,44 +647,28 @@
   R('scratch', {
     time: 0, noScore: true,
     setup: function (a) {
-      var przTH = ['🎁 ของแถม 1 ชิ้น', '💰 ส่วนลด 100 บาท', '☕ กาแฟฟรี 1 แก้ว', '🎫 คูปอง 50%', '😅 เสียใจด้วย', '🏆 รางวัลใหญ่!'];
-      var przEN = ['🎁 Free gift', '💰 100 THB off', '☕ Free coffee', '🎫 50% coupon', '😅 Better luck!', '🏆 Grand prize!'];
-      a.data.prize = a.pick(a.lang === 'en' ? przEN : przTH);
-
       var cw = Math.round(Math.min(a.W * .84, a.mn * .95));
       var ch = Math.round(Math.min(a.H * .38, cw * (a.port ? .70 : .52)));
-      var L = { cw: cw, ch: ch, x: Math.round((a.W - cw) / 2), y: Math.round(a.H * .5 - ch * .38) };
-      a.data.LO = L;
-
-      var c = document.createElement('canvas'); c.width = cw; c.height = ch;
-      var cg = c.getContext('2d');
-      /* ชั้นฟอยล์: ใช้ภาพถ้ามี ไม่มีก็ไล่เฉดเงินให้เหมือนเดิม */
-      var fim = a.sprImg && a.sprImg('foil');
-      if (fim) cg.drawImage(fim, 0, 0, cw, ch);
-      else {
-        var gr = cg.createLinearGradient(0, 0, cw, ch);
-        gr.addColorStop(0, '#c9cfe0'); gr.addColorStop(.5, '#f0f3fa'); gr.addColorStop(1, '#a8b0c8');
-        cg.fillStyle = gr; cg.fillRect(0, 0, cw, ch);
-        cg.fillStyle = 'rgba(255,255,255,.5)';
-        for (var i = 0; i < 60; i++) cg.fillRect((i * 37) % cw, (i * 61) % ch, cw * .04, 3);
-      }
-      var fs = Math.round(ch * .13);
-      cg.font = '700 ' + fs + 'px Kanit,sans-serif'; cg.fillStyle = 'rgba(90,100,130,.85)';
-      cg.textAlign = 'center'; cg.textBaseline = 'middle'; cg.fillText('SCRATCH HERE', cw / 2, ch / 2);
-      a.data.foil = c; a.data.fg = cg; a.data.done = false; a.data.last = null; a.data.chk = 0;
+      a.data.LO = { cw: cw, ch: ch, x: Math.round((a.W - cw) / 2), y: Math.round(a.H * .5 - ch * .38) };
+      newCard(a);
     },
     update: function (dt, a) {
-      var d = a.data; if (d.done) return;
+      var d = a.data;
+      if (d.done) { d.rdy -= dt; return; }
       d.chk -= dt; if (d.chk > 0) return; d.chk = .3;
       var L = d.LO, im = d.fg.getImageData(0, 0, L.cw, L.ch).data, n = 0, tot = 0;
       for (var i = 3; i < im.length; i += 4 * 60) { tot++; if (im[i] < 40) n++; }
       if (tot && n / tot > .55) {
-        d.done = true; a.beep(1000, .3, 'triangle');
+        d.done = true; d.rdy = .7; a.beep(1000, .3, 'triangle');
         a.shake(.016, .34); a.flash('#ffd23f', .22);
         a.puff(a.W / 2, L.y + L.ch / 2, { n: 22, col: '#ffd23f', spread: 3.14, spd: L.ch * 3, size: L.ch * .035, life: .8, grav: L.ch * 2.4 });
       }
     },
-    down: function (x, y, a) { a.data.last = null; scr(x, y, a); },
+    down: function (x, y, a) {
+      /* ขูดเสร็จแล้ว แตะอีกครั้งเพื่อรับใบใหม่ (เว้น 0.7 วิให้ดูรางวัลก่อน) */
+      if (a.data.done) { if (a.data.rdy <= 0) { newCard(a); a.beep(620, .1); } return; }
+      a.data.last = null; scr(x, y, a);
+    },
     move: function (x, y, a) { if (a.pointer.down) scr(x, y, a); },
     up: function (x, y, a) { a.data.last = null; },
     draw: function (g, a) {
@@ -704,10 +688,38 @@
       while (g.measureText(d.prize).width > L.cw * .9 && fs > 10) { fs -= 1; g.font = '700 ' + fs + 'px Kanit,sans-serif'; }
       a.text(d.prize, a.W / 2, L.y + L.ch * (art ? .76 : .5), fs, d.done ? a.C.primary : a.C.dark);
       if (!d.done) { g.save(); a.rr(L.x, L.y, L.cw, L.ch, a.mn * .022); g.clip(); g.drawImage(d.foil, L.x, L.y); g.restore(); }
-      a.text(d.done ? a.txt({ th: 'กดเล่นอีกครั้งเพื่อรับใบใหม่', en: 'Play again for a new card' }) : a.txt({ th: 'ลากนิ้วเพื่อขูด', en: 'Drag to scratch' }),
+      a.text(d.done ? a.txt({ th: 'แตะที่จอเพื่อรับบัตรใบใหม่', en: 'Tap anywhere for a new card' }) : a.txt({ th: 'ลากนิ้วเพื่อขูด', en: 'Drag to scratch' }),
         a.W / 2, L.y + L.ch + pad * 2.1, a.mn * .034, 'rgba(255,255,255,.9)');
     }
   });
+  /* ออกบัตรใบใหม่: สุ่มรางวัล + สร้างชั้นฟอยล์ใหม่ทั้งใบ
+     เรียกทั้งตอนเริ่มเกม และตอนแตะขอใบใหม่หลังขูดเสร็จ */
+  function newCard(a) {
+    var przTH = ['🎁 ของแถม 1 ชิ้น', '💰 ส่วนลด 100 บาท', '☕ กาแฟฟรี 1 แก้ว', '🎫 คูปอง 50%', '😅 เสียใจด้วย', '🏆 รางวัลใหญ่!'];
+    var przEN = ['🎁 Free gift', '💰 100 THB off', '☕ Free coffee', '🎫 50% coupon', '😅 Better luck!', '🏆 Grand prize!'];
+    var L = a.data.LO, cw = L.cw, ch = L.ch;
+    a.data.prize = a.pick(a.lang === 'en' ? przEN : przTH);
+
+    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    var cg = c.getContext('2d');
+    /* ชั้นฟอยล์: ใช้ภาพถ้ามี ไม่มีก็ไล่เฉดเงินให้เหมือนเดิม */
+    var fim = a.sprImg && a.sprImg('foil');
+    if (fim) cg.drawImage(fim, 0, 0, cw, ch);
+    else {
+      var gr = cg.createLinearGradient(0, 0, cw, ch);
+      gr.addColorStop(0, '#c9cfe0'); gr.addColorStop(.5, '#f0f3fa'); gr.addColorStop(1, '#a8b0c8');
+      cg.fillStyle = gr; cg.fillRect(0, 0, cw, ch);
+      cg.fillStyle = 'rgba(255,255,255,.5)';
+      for (var i = 0; i < 60; i++) cg.fillRect((i * 37) % cw, (i * 61) % ch, cw * .04, 3);
+    }
+    var fs = Math.round(ch * .13);
+    cg.font = '700 ' + fs + 'px Kanit,sans-serif'; cg.fillStyle = 'rgba(90,100,130,.85)';
+    cg.textAlign = 'center'; cg.textBaseline = 'middle';
+    cg.fillText(a.txt({ th: 'ขูดตรงนี้', en: 'SCRATCH HERE' }), cw / 2, ch / 2);
+    a.data.foil = c; a.data.fg = cg;
+    a.data.done = false; a.data.rdy = 0; a.data.last = null; a.data.chk = 0;
+  }
+
   function scr(x, y, a) {
     var d = a.data; if (d.done) return;
     var L = d.LO, lx = x - L.x, ly = y - L.y, m = L.cw * .06;
