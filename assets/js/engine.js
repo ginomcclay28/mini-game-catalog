@@ -260,7 +260,9 @@ window.MiniGame = (function () {
         opt = opt || {};
         var n = opt.n || 8, spd = opt.spd || a.mn * .5;
         for (var i = 0; i < n; i++) {
-          var ang = opt.spread ? (-Math.PI / 2 + (Math.random() - .5) * opt.spread)
+          /* ang = มุมฐานของการพ่น (ค่าเริ่มต้นชี้ขึ้น)  spread = ความกว้างของกรวย */
+          var base = opt.ang !== undefined ? opt.ang : -Math.PI / 2;
+          var ang = opt.spread ? (base + (Math.random() - .5) * opt.spread)
                                : Math.random() * 6.2832;
           var v = spd * (.4 + Math.random() * .8);
           fx.push({

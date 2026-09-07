@@ -297,6 +297,7 @@ window.GAME_SPRITES = {
   dodgerock: {
     ship: 'ship.png',   // ยาน หัวชี้ขึ้น  เปลี่ยนเป็นมาสคอตได้
     rock: 'rock.png',   // อุกกาบาต
+    coin: 'coin.png',   // เหรียญให้เก็บ (คัดลอกมาจากเกม 34)
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   },
 

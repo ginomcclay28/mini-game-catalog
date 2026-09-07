@@ -36,7 +36,8 @@
           var bomb = Math.random() < .18;
           d.f.push({
             x: a.rnd(a.W * .15, a.W * .85), y: a.H + L.r,
-            vx: a.rnd(-a.mn * .18, a.mn * .18), vy: -a.rnd(a.mn * .95, a.mn * 1.25),
+            /* ความเร็วขึ้นคิดจากความสูงจอ: ลอยถึง 55-92% ของจอ ไม่ว่าจะแนวนอนหรือแนวตั้ง */
+            vx: a.rnd(-a.mn * .18, a.mn * .18), vy: -Math.sqrt(2 * L.G * a.rnd(.55, .92) * a.H),
             e: bomb ? { k: 'bomb', e: '💣', j: '#2b2b3d' } : a.pick(d.kinds), b: bomb, rot: a.rnd(0, 6.28), vr: a.rnd(-4, 4), cut: 0
           });
         }
@@ -72,8 +73,9 @@
             /* น้ำผลไม้กระเซ็น + ผ่าเป็น 2 ซีก กระเด็นคนละทาง */
             a.puff(o.x, o.y, { n: 10, col: o.e.j, spread: 3.14, spd: L.r * 5, size: L.r * .16, life: .5 });
             var ang = Math.atan2(y - last.y, x - last.x), nx = -Math.sin(ang), ny = Math.cos(ang);
-            d.halves.push({ x: o.x, y: o.y, vx: o.vx + nx * L.r * 3, vy: o.vy + ny * L.r * 3 - L.r * 2, rot: o.rot, vr: o.vr - 3, e: o.e, side: 0, cut: ang });
-            d.halves.push({ x: o.x, y: o.y, vx: o.vx - nx * L.r * 3, vy: o.vy - ny * L.r * 3 - L.r * 2, rot: o.rot, vr: o.vr + 3, e: o.e, side: 1, cut: ang });
+            /* ซีก 0 อยู่ฝั่ง -normal จึงต้องกระเด็นไปทาง -normal (ของเดิมสลับกัน วิ่งสวนทะลุกัน) */
+            d.halves.push({ x: o.x, y: o.y, vx: o.vx - nx * L.r * 3, vy: o.vy - ny * L.r * 3 - L.r * 2, rot: o.rot, vr: o.vr - 3, e: o.e, side: 0, cut: ang });
+            d.halves.push({ x: o.x, y: o.y, vx: o.vx + nx * L.r * 3, vy: o.vy + ny * L.r * 3 - L.r * 2, rot: o.rot, vr: o.vr + 3, e: o.e, side: 1, cut: ang });
           }
           d.f.splice(i, 1);
         }
@@ -165,7 +167,18 @@
       d.py += (d.ty - d.py) * Math.min(1, dt * 15);
       /* ไฟท้ายยาน พ่นตลอดเวลา */
       d.fl = (d.fl || 0) + dt;
-      if (d.fl > .04) { d.fl = 0; a.puff(d.px, d.py + L.pr * 1.1, { n: 2, col: '#ff8a3d', spread: .8, spd: L.pr * 6, size: L.pr * .28, life: .3, grav: 0 }); }
+      if (d.fl > .04) { d.fl = 0; a.puff(d.px, d.py + L.pr * 1.1, { n: 2, col: '#ff8a3d', ang: Math.PI / 2, spread: .8, spd: L.pr * 6, size: L.pr * .28, life: .3, grav: 0 }); }
+      /* เหรียญร่วงลงมาให้เก็บ */
+      d.cs = (d.cs || 0) - dt;
+      if (d.cs <= 0) { d.coins = d.coins || []; d.coins.push({ x: a.rnd(L.pr * 2, a.W - L.pr * 2), y: -L.pr * 2, v: L.spd * .9 }); d.cs = a.rnd(1.2, 2.4); }
+      for (var ci = (d.coins || []).length - 1; ci >= 0; ci--) {
+        var cn = d.coins[ci]; cn.y += cn.v * dt;
+        if (Math.hypot(cn.x - d.px, cn.y - d.py) < L.pr * 2.2) {
+          a.add(25); a.beep(1000, .08); a.shake(.006, .1);
+          a.puff(cn.x, cn.y, { n: 8, col: '#ffd23f', spread: 3.14, spd: L.pr * 6, size: L.pr * .3, life: .4, grav: 0 });
+          d.coins.splice(ci, 1);
+        } else if (cn.y > a.H + L.pr * 3) d.coins.splice(ci, 1);
+      }
       d.sp -= dt;
       if (d.sp <= 0) {
         var rr = a.rnd(a.mn * .035, a.mn * .075);
@@ -188,6 +201,10 @@
         g.fillStyle = 'rgba(255,255,255,' + (.12 + (i % 5) * .06) + ')';
         g.fillRect(sx, sy, 2, 2);   // ดาววิ่ง วาดทับพื้นหลังได้ ให้รู้สึกว่ายานเคลื่อนที่
       }
+      (d.coins || []).forEach(function (cn) {
+        var sp = 1 + Math.sin(a.now * 8 + cn.y) * .1;   // เหรียญวิบวับ
+        if (!a.spr('coin', null, cn.x, cn.y, L.pr * 2.4, { sx: sp })) { a.circle(cn.x, cn.y, L.pr * 1.1, a.C.accent); a.text('★', cn.x, cn.y, L.pr, '#8a6a00'); }
+      });
       d.r.forEach(function (o) {
         if (a.spr('rock', null, o.x, o.y, o.r * 2.2, { rot: o.rot })) return;
         g.save(); g.translate(o.x, o.y); g.rotate(o.rot);
@@ -450,7 +467,16 @@
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
+      /* ลม: สุ่มทิศและแรงใหม่ทุก 5 วิ ผลักลูกบอลไปด้านข้างตลอดเวลา */
+      d.wt = (d.wt === undefined ? 0 : d.wt) - dt;
+      if (d.wt <= 0) { d.wt = 5; d.wind = a.pick([-1, 1]) * a.rnd(a.mn * .10, a.mn * .32); d.wflash = .8; }
+      d.wflash = Math.max(0, (d.wflash || 0) - dt);
+      d.vx += d.wind * dt;
       d.vy += L.G * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.rot += d.vx * dt * .02;
+      /* ใบไม้ปลิวบอกทิศลม */
+      d.lt = (d.lt || 0) + dt;
+      if (d.lt > .12) { d.lt = 0; a.puff(d.wind > 0 ? -a.mn * .02 : a.W + a.mn * .02, a.rnd(a.H * .15, a.H * .85),
+        { n: 1, col: 'rgba(255,255,255,.55)', ang: d.wind > 0 ? 0 : Math.PI, spread: .5, spd: Math.abs(d.wind) * 2.5, size: a.mn * .006, life: 1.6, grav: 0 }); }
       if (d.x < L.r) { d.x = L.r; d.vx = Math.abs(d.vx); }
       if (d.x > a.W - L.r) { d.x = a.W - L.r; d.vx = -Math.abs(d.vx); }
       if (d.y < L.r) { d.y = L.r; d.vy = Math.abs(d.vy) * .6; }
@@ -477,6 +503,13 @@
         g.save(); g.translate(d.x, d.y); g.rotate(d.rot); EM(g, '⚽', 0, 0, L.r * 2); g.restore();
       }
       a.text(a.score + '', a.W / 2, a.H * .5, a.mn * .22, 'rgba(255,255,255,.13)');
+      /* ป้ายบอกลม: ลูกศรตามทิศ จำนวนตามแรง กระพริบตอนเปลี่ยน */
+      var wn = Math.min(3, Math.ceil(Math.abs(d.wind || 0) / (a.mn * .11))), arr = d.wind > 0 ? '»' : '«', str = '';
+      for (var wi = 0; wi < wn; wi++) str += arr;
+      g.globalAlpha = d.wflash > 0 ? .6 + Math.sin(d.wflash * 25) * .4 : 1;
+      a.fillRR(a.W / 2 - a.mn * .13, a.mn * .105, a.mn * .26, a.mn * .055, a.mn * .0275, 'rgba(0,0,0,.35)');
+      a.text(a.txt({ th: 'ลม ', en: 'Wind ' }) + str, a.W / 2, a.mn * .133, a.mn * .034, '#fff');
+      g.globalAlpha = 1;
       a.head(a.txt({ th: 'แตะที่ลูกบอลไม่ให้ตกพื้น', en: 'Tap the ball, keep it up' }));
     }
   });
@@ -510,7 +543,7 @@
       if (here && Math.abs(d.y - here.cy) > here.h - L.pr) { a.beep(130, .3, 'sawtooth'); a.shake(.04, .5); a.flash('#ff4646', .3); a.end(); }
       /* ควันท้ายเครื่อง */
       d.tr = (d.tr || 0) + dt;
-      if (d.tr > .05) { d.tr = 0; a.puff(L.px - L.pr * 1.2, d.y, { n: 1, col: 'rgba(255,255,255,.7)', spread: .6, spd: L.pr * 2, size: L.pr * .35, life: .4, grav: 0 }); }
+      if (d.tr > .05) { d.tr = 0; a.puff(L.px - L.pr * 1.2, d.y, { n: 1, col: 'rgba(255,255,255,.7)', ang: Math.PI, spread: .6, spd: L.pr * 2, size: L.pr * .35, life: .4, grav: 0 }); }
     },
     down: function (x, y, a) { a.data.ty = y; },
     move: function (x, y, a) { if (a.pointer.down) a.data.ty = y; },
