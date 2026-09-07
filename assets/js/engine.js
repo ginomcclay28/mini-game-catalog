@@ -139,6 +139,9 @@ window.MiniGame = (function () {
       /* มีภาพของคีย์นี้ไหม */
       hasSpr: function (k) { return !!SPR[k]; },
 
+      /* ขอตัวภาพดิบ สำหรับเกมที่ต้องวาดลง canvas ของตัวเอง เช่นชั้นฟอยล์บัตรขูด */
+      sprImg: function (k) { return SPR[k] ? SPR[k].img : null; },
+
       /* วาดภาพประกอบ ถ้าไม่มีไฟล์จะวาดอิโมจิที่ส่งมาแทน
          a.spr(key, fallbackEmoji, x, y, size, opt)
          x,y = จุดกึ่งกลาง   size = ความสูงที่ต้องการ (กว้างคำนวณตามสัดส่วนภาพ)
