@@ -321,6 +321,10 @@
         hr: a.mn * .075, xmin: a.W * .44, xmax: a.W - a.mn * .13,
         G: a.mn * 1.28
       };
+      /* ความเร็วสูงสุด = ความเร็วต่ำสุดที่โยนถึง "ห่วงตำแหน่งไกลสุด" ได้ + เผื่อ 30%
+         (สูตรวิถีโค้ง v² = G(h + √(d²+h²)))  ปรับตามจอเอง แนวตั้งจะได้แรงกว่าอัตโนมัติ */
+      var Lh = a.data.LO, hh = Lh.by0 - Lh.hy, dd = Lh.xmax - Lh.bx0;
+      Lh.vmax = Math.sqrt(Lh.G * (hh + Math.sqrt(dd * dd + hh * hh))) * 1.3;
       a.data.b = { x: a.data.LO.bx0, y: a.data.LO.by0, vx: 0, vy: 0, fly: 0 };
       a.data.hx = (a.data.LO.xmin + a.data.LO.xmax) / 2; a.data.hd = 1;
       a.data.aim = null; a.data.fx = 0; a.data.scored = 0;
@@ -337,7 +341,10 @@
         a.shake(.014, .28); a.flash('#ffd23f', .18);
         a.puff(d.hx, L.hy, { n: 16, col: a.C.accent, spread: 3.14, spd: L.hr * 5, size: L.hr * .12, life: .7, grav: L.hr * 9 });
       }
-      if (d.b.y > a.H + L.ball || d.b.x < -L.ball || d.b.x > a.W + L.ball) { d.b = { x: L.bx0, y: L.by0, vx: 0, vy: 0, fly: 0 }; }
+      /* ชนขอบซ้าย-ขวาให้เด้งกลับ ลูกจะได้ไม่หลุดจอไปเฉย ๆ */
+      if (d.b.x < L.ball * .5) { d.b.x = L.ball * .5; d.b.vx = Math.abs(d.b.vx) * .6; a.beep(300, .04); }
+      if (d.b.x > a.W - L.ball * .5) { d.b.x = a.W - L.ball * .5; d.b.vx = -Math.abs(d.b.vx) * .6; a.beep(300, .04); }
+      if (d.b.y > a.H + L.ball) { d.b = { x: L.bx0, y: L.by0, vx: 0, vy: 0, fly: 0 }; }
     },
     down: function (x, y, a) { if (!a.data.b.fly) a.data.aim = { x: x, y: y, sx: x, sy: y }; },
     move: function (x, y, a) { if (a.data.aim) { a.data.aim.x = x; a.data.aim.y = y; } },
@@ -375,15 +382,21 @@
       }
       a.spr('ball', '\ud83c\udfc0', d.b.x, d.b.y, L.ball, { rot: d.b.fly ? d.b.x * .012 : 0 });
       if (d.fx > 0) a.text('+30', d.hx, hy - hr - (0.8 - d.fx) * a.mn * .1, a.mn * .055, a.C.accent);
-      a.head(a.txt({ th: 'ลากลงเพื่อเล็ง แล้วปล่อยยิง', en: 'Drag down to aim, release to shoot' }));
+      a.head(a.txt({ th: 'ลากนิ้วไปทางห่วง แล้วปล่อย', en: 'Drag toward the hoop, then release' }));
     }
   });
+  /* เล็งแบบ "ลากไปทางไหน ลูกไปทางนั้น"  ยิ่งลากยาว ยิ่งแรง
+     (ของเดิมเป็นหนังสติ๊ก ลากถอยหลังแล้วลูกพุ่งสวนทาง คนเล่นงง) */
   function aimV(a) {
     var d = a.data, L = d.LO;
-    var dx = d.aim.sx - d.aim.x, dy = d.aim.sy - d.aim.y;
-    var p = Math.min(1, Math.hypot(dx, dy) / (a.mn * .38));
-    if (p <= .08) return null;
-    return { vx: dx * 3.1 * p * (a.mn / 720), vy: -Math.abs(dy * 3.4 * p * (a.mn / 720)) - a.mn * .26 };
+    var dx = d.aim.x - d.aim.sx, dy = d.aim.y - d.aim.sy;
+    var len = Math.hypot(dx, dy);
+    if (len < a.mn * .04) return null;
+    var p = Math.min(1, len / (a.mn * .42));
+    var sp = L.vmax * (.4 + .6 * p);
+    var ux = dx / len, uy = Math.min(-.15, dy / len);   // บังคับให้มีแรงขึ้นเสมอ
+    var n = Math.hypot(ux, uy);
+    return { vx: ux / n * sp, vy: uy / n * sp };
   }
 
   /* ---------- 16 ยิงเป้าธนู ----------
@@ -555,10 +568,11 @@
     update: function (dt, a) {
       var d = a.data, L = d.LO;
       d.run += dt; d.spd += dt * a.mn * .012;
+      d.dist = (d.dist || 0) + d.spd * dt;          // ระยะทางจริงที่วิ่งไป ใช้เลื่อนลายถนน
       if (d.y > 0 || d.v < 0) { d.v += L.G * dt; d.y -= d.v * dt; if (d.y <= 0) { d.y = 0; d.v = 0; } }
       var lastX = d.ob.length ? d.ob[d.ob.length - 1].x : -Infinity;
       if (lastX < a.W - a.rnd(a.mn * .55, a.mn * 1.0))
-        d.ob.push({ x: a.W + a.mn * .08, h: a.rnd(a.mn * .066, a.mn * .12), hit: 0 });
+        d.ob.push({ x: a.W + a.mn * .08, h: a.mn * .095, hit: 0 });   // สูงเท่ากันทุกอัน
       d.ob.forEach(function (o) {
         o.x -= d.spd * dt;
         if (!o.hit && o.x < L.px) {
@@ -585,12 +599,14 @@
       }
       g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = a.mn * .006;
       g.setLineDash([a.mn * .055, a.mn * .047]);
-      g.lineDashOffset = -(d.run * d.spd) % (a.mn * .102);
-      g.beginPath(); g.moveTo(0, gy + a.mn * .06); g.lineTo(a.W, gy + a.mn * .06); g.stroke(); g.setLineDash([]);
+      g.lineDashOffset = -(d.dist || 0) % (a.mn * .102);   // เลื่อนเท่ากับสิ่งกีดขวางเป๊ะ
+      /* เส้นถนนอยู่ใต้เท้าพอดี (มีภาพพื้นหลัง) — ของเดิมอยู่ต่ำกว่าเท้า ทำให้ตัววิ่งกับรั้วดูลอย */
+      var ly = gy + (art ? a.mn * .012 : a.mn * .06);
+      g.beginPath(); g.moveTo(0, ly); g.lineTo(a.W, ly); g.stroke(); g.setLineDash([]);
       d.ob.forEach(function (o) {
         /* สิ่งกีดขวางกำหนดขนาดจากความสูง ฐานแตะพื้นพอดี
            (วาดใหญ่กว่าเส้นชนจริง 15% เพราะภาพมีขอบว่างในตัว จะได้ไม่ดูจิ๋วเทียบกับตัววิ่ง) */
-        if (!a.spr('hurdle', null, o.x, gy - o.h * .575, o.h * 1.15))
+        if (!a.spr('hurdle', null, o.x, gy - o.h * .53, o.h * 1.15))   // .53 = ชดเชยขอบว่าง 4% ในภาพ ให้ขาแตะพื้นพอดี
           a.fillRR(o.x - a.mn * .036, gy - o.h, a.mn * .072, o.h, a.mn * .011, a.C.accent);
       });
       /* ตัววิ่ง: อยู่บนพื้นเด้งขึ้นลงตามจังหวะก้าว  กลางอากาศเอนไปข้างหน้า */
