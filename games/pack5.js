@@ -751,17 +751,25 @@
     time: 0,
     setup: function (a) {
       var ds = a.mn * .21, cw = a.mn * .09 * 1.75;
-      a.data.LO = { top: a.mn * .16, floor: a.H - a.mn * .12, cw: cw, ds: ds, chuteX: a.W * .13, chuteW: a.mn * .2, lowY: a.mn * .16 + a.H * .25, G: a.mn * 2.2 };
+      /* piv = ความยาวช่วงสายที่แกว่ง (จุดหมุนอยู่ใกล้ขาคีบ ไม่ใช่บนสุด)
+         ตำแหน่งรูบนพื้น/พื้นตู้ วัดจากภาพพื้นหลังจริง (แนวนอน: รูกลาง x 16.7% กว้าง 13% ปากรู y 83.4%) */
+      var art = a.hasSpr('bg');
+      a.data.LO = { top: a.mn * .16, floor: art ? a.H * (a.port ? .925 : .885) : a.H - a.mn * .12, cw: cw, ds: ds,
+        chuteX: art ? a.W * (a.port ? .172 : .167) : a.W * .13, chuteW: art ? a.W * (a.port ? .17 : .13) : a.mn * .26,
+        holeTop: art ? a.H * (a.port ? .892 : .834) : 0, holeBot: art ? a.H * (a.port ? .968 : .956) : 0,
+        lowY: a.mn * .16 + a.H * .25, G: a.mn * 2.2, piv: a.mn * .26, art: art };
       var d = a.data;
       d.cx = a.W * .5; d.dir = 1; d.st = 'move'; d.cy = d.LO.top; d.th = 0;
       d.swA = 0; d.swW = 0; d.swP = 0; d.swT = 0;
       d.tries = 6; d.hold = null; d.msg = ''; d.wait = 0; d.drop = null; d.score = 0;
       var e = [{ k: 'p1', e: '🧸' }, { k: 'p2', e: '🐰' }, { k: 'p3', e: '🐤' }, { k: 'p4', e: '🐼' }, { k: 'p5', e: '🤖' }, { k: 'p6', e: '🦖' }];
+      /* ตุ๊กตากระจายเต็มตู้: ชั้นล่างเรียงเว้นระยะเท่า ๆ กัน ชั้นบนแทรกตามช่องว่าง ไม่ทับกันมาก */
       d.items = [];
-      for (var i = 0; i < 14; i++) {
-        var layer = i < 9 ? 0 : 1;
-        d.items.push({ x: a.rnd(a.W * .30, a.W * .90), y: d.LO.floor - ds * (layer ? .95 : .42), e: e[i % 6], got: 0, rot: a.rnd(-.45, .45), layer: layer, vx: 0, vy: 0, chute: 0 });
-      }
+      var x0 = a.W * .30, x1 = a.W * .92, n0 = Math.max(4, Math.floor((x1 - x0) / (ds * .62))), n1 = Math.max(2, Math.floor(n0 * .6));
+      for (var i = 0; i < n0; i++)
+        d.items.push({ x: x0 + (i + .5) * (x1 - x0) / n0 + a.rnd(-ds * .08, ds * .08), y: d.LO.floor - ds * .42, e: e[i % 6], got: 0, rot: a.rnd(-.3, .3), layer: 0, vx: 0, vy: 0, chute: 0 });
+      for (var j = 0; j < n1; j++)
+        d.items.push({ x: x0 + (j + .5) * (x1 - x0) / n1 + a.rnd(-ds * .1, ds * .1), y: d.LO.floor - ds * .8, e: e[(j + 3) % 6], got: 0, rot: a.rnd(-.4, .4), layer: 1, vx: 0, vy: 0, chute: 0 });
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
@@ -800,7 +808,7 @@
       } else if (d.st === 'carry') {
         var dx = L.chuteX - d.cx, step = a.mn * .42 * dt;
         d.th *= Math.pow(.08, dt);
-        if (Math.abs(dx) <= step) { d.cx = L.chuteX; d.st = 'lower'; newSwing(a, .25, 1.0); }
+        if (Math.abs(dx) <= step) { d.cx = L.chuteX; d.st = 'lower'; newSwing(a, .12, .5); }
         else d.cx += Math.sign(dx) * step;
       } else if (d.st === 'lower') {
         d.swT += dt; d.th = d.swA * Math.sin(d.swW * d.swT + d.swP);
@@ -814,10 +822,16 @@
         var o = d.drop;
         o.vy += L.G * dt; o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.vr * dt;
         var restY = L.floor - L.ds * .42;
+        /* เหนือรู: ถือว่าตกลงรูเมื่อก้นตุ๊กตาถึงปากรู (ต่ำกว่าพื้นวางตุ๊กตาเล็กน้อย) */
+        if (!o.chute && L.art && Math.abs(o.x - L.chuteX) < L.chuteW / 2 - L.ds * .12 && o.y + L.ds * .42 >= L.holeTop && o.vy > 0) {
+          o.chute = 1; a.add(50); d.score++; d.msg = a.txt({ th: 'ลงปล่อง! +50', en: 'In the chute! +50' });
+          a.beep(1200, .25, 'triangle'); a.flash('#ffd23f', .16);
+          a.puff(o.x, L.holeTop, { n: 14, col: a.C.accent, spread: 3.14, spd: L.ds * 2.5, size: L.ds * .05, life: .5 });
+        }
         if (o.chute) {
           if (o.y > L.floor + L.ds) { d.drop = null; d.st = 'move'; craneEnd(a); }
         } else if (o.y >= restY && o.vy > 0) {
-          if (Math.abs(o.x - L.chuteX) < L.chuteW / 2 - L.ds * .15) {
+          if (!L.art && Math.abs(o.x - L.chuteX) < L.chuteW / 2 - L.ds * .15) {
             o.chute = 1; a.add(50); d.score++; d.msg = a.txt({ th: 'ลงปล่อง! +50', en: 'In the chute! +50' });
             a.beep(1200, .25, 'triangle'); a.flash('#ffd23f', .16);
             a.puff(o.x, restY, { n: 14, col: a.C.accent, spread: 3.14, spd: L.ds * 2.5, size: L.ds * .05, life: .5 });
@@ -836,21 +850,23 @@
     },
     down: function (x, y, a) {
       var d = a.data;
-      if (d.st === 'move') { d.st = 'down'; d.tries--; d.msg = ''; newSwing(a, .15, 1.1); a.beep(400, .07); }
+      if (d.st === 'move') { d.st = 'down'; d.tries--; d.msg = ''; newSwing(a, .08, .6); a.beep(400, .07); }
       else if (d.st === 'release') craneRelease(a);
     },
     draw: function (g, a) {
       a.bg('#5b1064', '#ff2e88');
       var d = a.data, L = d.LO;
-      a.fillRR(a.mn * .04, L.top - a.mn * .05, a.W - a.mn * .08, L.floor - L.top + a.mn * .1, a.mn * .03, 'rgba(255,255,255,.10)');
-      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(a.mn * .04, L.floor, a.W - a.mn * .08, a.H - L.floor - a.mn * .02);
-      /* ปล่องปล่อยตุ๊กตา ด้านซ้าย */
-      var cx0 = L.chuteX - L.chuteW / 2, cy0 = L.floor - a.mn * .03;
-      a.fillRR(cx0 - a.mn * .012, cy0 - a.mn * .012, L.chuteW + a.mn * .024, a.mn * .1, a.mn * .015, a.C.accent);
-      a.fillRR(cx0, cy0, L.chuteW, a.mn * .09, a.mn * .012, '#160a24');
-      g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = Math.max(1, a.mn * .004); g.setLineDash([a.mn * .015, a.mn * .015]);
-      g.beginPath(); g.moveTo(L.chuteX, L.top + a.mn * .02); g.lineTo(L.chuteX, cy0 - a.mn * .02); g.stroke(); g.setLineDash([]);
-      a.text(a.txt({ th: 'ปล่อง', en: 'CHUTE' }), L.chuteX, cy0 - a.mn * .035, a.mn * .034, a.C.accent);
+      var cx0 = L.chuteX - L.chuteW / 2, cy0 = L.art ? L.holeTop : L.floor - a.mn * .03;
+      if (!L.art) {
+        a.fillRR(a.mn * .04, L.top - a.mn * .05, a.W - a.mn * .08, L.floor - L.top + a.mn * .1, a.mn * .03, 'rgba(255,255,255,.10)');
+        g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(a.mn * .04, L.floor, a.W - a.mn * .08, a.H - L.floor - a.mn * .02);
+        /* ปล่องปล่อยตุ๊กตา ด้านซ้าย (กรณีไม่มีภาพพื้นหลังที่มีรูอยู่แล้ว) */
+        a.fillRR(cx0 - a.mn * .012, cy0 - a.mn * .012, L.chuteW + a.mn * .024, a.mn * .1, a.mn * .015, a.C.accent);
+        a.fillRR(cx0, cy0, L.chuteW, a.mn * .09, a.mn * .012, '#160a24');
+        a.text(a.txt({ th: 'ปล่อง', en: 'CHUTE' }), L.chuteX, cy0 - a.mn * .035, a.mn * .034, a.C.accent);
+      }
+      g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = Math.max(1, a.mn * .004); g.setLineDash([a.mn * .015, a.mn * .015]);
+      g.beginPath(); g.moveTo(L.chuteX, L.top + a.mn * .02); g.lineTo(L.chuteX, cy0 - a.mn * .12); g.stroke(); g.setLineDash([]);
       /* ตุ๊กตาในกอง: ชั้นล่างก่อน ชั้นบนทับ */
       [0, 1].forEach(function (ly) {
         d.items.forEach(function (o) {
@@ -861,7 +877,8 @@
       /* สายเคเบิล + ขาคีบ แกว่งตามมุม */
       var t = craneTip(a);
       g.strokeStyle = '#ddd'; g.lineWidth = a.mn * .008;
-      g.beginPath(); g.moveTo(d.cx, L.top - a.mn * .05); g.lineTo(d.cx, L.top); g.lineTo(t.x, t.y); g.stroke();
+      g.beginPath(); g.moveTo(d.cx, L.top - a.mn * .05); g.lineTo(d.cx, t.y - Math.cos(d.th) * t.piv); g.lineTo(t.x, t.y); g.stroke();
+      a.circle(d.cx, t.y - Math.cos(d.th) * t.piv, a.mn * .008, '#bbb');   /* จุดหมุน */
       var dirx = Math.sin(d.th), diry = Math.cos(d.th);
       if (d.hold) a.spr(d.hold.e.k, d.hold.e.e, t.x + dirx * L.cw * .95, t.y + diry * L.cw * .95, L.ds, { rot: -d.th + Math.sin(a.now * 6) * .06 });
       var open = d.hold ? .7 : 1;
@@ -872,7 +889,7 @@
       }
       /* ตุ๊กตาที่กำลังตกลงปล่อง */
       if (d.drop) {
-        g.save(); if (d.drop.chute) { a.rr(cx0, cy0, L.chuteW, a.mn * .09, 0); g.clip(); }
+        g.save(); if (d.drop.chute) { a.rr(cx0, cy0, L.chuteW, L.art ? L.holeBot - L.holeTop : a.mn * .09, 0); g.clip(); }
         a.spr(d.drop.e.k, d.drop.e.e, d.drop.x, d.drop.y, L.ds, { rot: d.drop.rot }); g.restore();
       }
       /* มุมเอียงของขาคีบ */
@@ -888,9 +905,10 @@
     }
   });
   /* ปลายสาย (จุดแขวนขาคีบ) หลังหมุนตามมุมแกว่ง */
+  /* สายตรงลงมาจากบนสุด แล้วช่วงท้ายยาว piv แกว่งรอบจุดหมุน */
   function craneTip(a) {
-    var d = a.data, L = d.LO, len = d.cy - L.top;
-    return { x: d.cx + Math.sin(d.th) * len, y: L.top + Math.cos(d.th) * len };
+    var d = a.data, L = d.LO, len = d.cy - L.top, piv = Math.min(len, L.piv);
+    return { x: d.cx + Math.sin(d.th) * piv, y: L.top + (len - piv) + Math.cos(d.th) * piv, piv: piv };
   }
   function newSwing(a, lo, hi) {
     var d = a.data;
@@ -898,7 +916,7 @@
   }
   function craneRelease(a) {
     var d = a.data, L = d.LO, t = craneTip(a), o = d.hold; if (!o) return;
-    var len = d.cy - L.top, thv = d.swA * d.swW * Math.cos(d.swW * d.swT + d.swP);   /* ความเร็วเชิงมุม -> ความเร็วปลายสาย */
+    var len = t.piv, thv = d.swA * d.swW * Math.cos(d.swW * d.swT + d.swP);   /* ความเร็วเชิงมุม -> ความเร็วปลายสาย (ช่วงที่แกว่ง) */
     o.x = t.x + Math.sin(d.th) * L.cw * .95; o.y = t.y + Math.cos(d.th) * L.cw * .95;
     o.vx = Math.cos(d.th) * thv * len; o.vy = Math.max(0, Math.sin(d.th) * thv * len); o.vr = -thv * .8; o.rot = -d.th; o.bounced = 0; o.chute = 0;
     d.hold = null; d.drop = o; d.st = 'drop'; d.msg = ''; a.beep(500, .06);
