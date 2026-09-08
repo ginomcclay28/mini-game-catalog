@@ -550,6 +550,193 @@ window.GAME_SPRITES = {
   paintfill: {
     roller: 'roller.png',   // ลูกกลิ้งทาสี ตามนิ้ว
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 71 เกมสามถ้วย ---------- */
+  shellgame: {
+    cup:  'cup.png',    // ถ้วยคว่ำ ขาว/เทา เกมย้อม 3 สี
+    ball: 'ball.png',   // ลูกบอลม่วง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 72 นับให้ไว ----------  ไอคอนคัดลอกจากเกม 20 */
+  countfast: {
+    i1: 'i1.png', i2: 'i2.png', i3: 'i3.png', i4: 'i4.png', i5: 'i5.png', i7: 'i7.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 73 หาคู่ที่ซ้ำ ----------  ไอคอนคัดลอกจากเกม 30 / 20 / 3 */
+  spotpair: {
+    t1: 't1.png', t2: 't2.png', t3: 't3.png', t4: 't4.png', t5: 't5.png', t6: 't6.png', t7: 't7.png', t8: 't8.png',
+    i1: 'i1.png', i2: 'i2.png', i3: 'i3.png', i4: 'i4.png', i5: 'i5.png', i6: 'i6.png', i7: 'i7.png', i8: 'i8.png',
+    s1: 's1.png', s2: 's2.png', s3: 's3.png', s4: 's4.png', s5: 's5.png', s6: 's6.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 74 จับคู่เงา ----------  ไอคอนคัดลอกจากเกม 20  เงา = ภาพเดียวกันย้อมดำ */
+  shadowmatch: {
+    i1: 'i1.png', i2: 'i2.png', i3: 'i3.png', i4: 'i4.png', i5: 'i5.png', i6: 'i6.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 75 เรียงขนาด ----------  ดาวขาวคัดลอกจากเกม 11 */
+  sizeorder: {
+    star: 'star.png',   // ดาว ขาว/เทา เกมย้อมสีตามลำดับ
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 76 ชั่งให้สมดุล ---------- */
+  balancescale: {
+    base: 'base.png',   // เสา+ฐาน จุดหมุนอยู่บนสุด
+    arm:  'arm.png',    // คาน+ถาดสองข้าง จุดหมุนอยู่กลางคาน (บนสุดของภาพ)
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 77 ผสมสี ---------- */
+  colorblend: { bg: 'bg.jpg', bgPort: 'bg-port.jpg' },
+
+  /* ---------- 78 ลากตามเส้น ---------- */
+  pathtrace: { bg: 'bg.jpg', bgPort: 'bg-port.jpg' },
+
+  /* ---------- 79 จำตำแหน่งไฟ ---------- */
+  memoryflash: {
+    tile: 'tile.png',   // ช่อง ขาว/เทา เกมย้อมสี (ติด/ดับ/กดแล้ว)
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 80 หยุดนาฬิกา ---------- */
+  clockstop: {
+    watch: 'watch.png',   // ตัวนาฬิกาจับเวลา หน้าปัดเปล่า ไม่มีเข็ม ไม่มีเลข
+    hand:  'hand.png',    // เข็ม ชี้ขึ้น
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 81 ทอยเต๋า ---------- */
+  dice: {
+    die: 'die.png',       // ลูกเต๋าหน้าเปล่า โค้ดวาดจุดเอง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 82 กบข้ามแม่น้ำ ---------- */
+  riverhop: {
+    frog: 'frog.png',     // ใช้ซ้ำจากเกม 6
+    pad: 'pad.png', rock: 'rock.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 83 เป่ายิ้งฉุบ ---------- */
+  rps: {
+    rock: 'rock.png', paper: 'paper.png', scissors: 'scissors.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 84 ตู้กาชาปอง ---------- */
+  capsule: {
+    machine: 'machine.png',
+    capsule: 'capsule.png',   // ขาว/เทา เกมย้อมสี
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 85 ทุบวัดพลัง ---------- */
+  hammerpower: {
+    tower: 'tower.png', hammer: 'hammer.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 86 ปล่อยจรวด ---------- */
+  rocketlaunch: {
+    rocket: 'rocket.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'   // อวกาศ ค่อย ๆ โผล่ตามความสูง
+  },
+
+  /* ---------- 87 จับสลาก ---------- */
+  luckydraw: {
+    box: 'box.png', hand: 'hand.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 88 แข่งม้า ---------- */
+  horserace: {
+    horse: 'horse.png', dog: 'dog.png', turtle: 'turtle.png', rabbit: 'rabbit.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 89 เปิดแผ่นหาสมบัติ ---------- */
+  treasuredig: {
+    tile: 'tile.png',
+    coin: 'coin.png', bomb: 'bomb.png',   // ใช้ซ้ำจากเกม 44 / 1
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 90 ตีปิญาต้า ---------- */
+  pinata: {
+    pinata: 'pinata.png', bat: 'bat.png', candy: 'candy.png',
+    gift: 'gift.png', coin: 'coin.png', star: 'star.png', gem: 'gem.png',   // ใช้ซ้ำ 12 / 44 / 11 / 44
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 91 ชักเย่อ ---------- */
+  vstug: {
+    p1: 'p1.png', p2: 'p2.png', rope: 'rope.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 92 ปิงปอง 2 คน ---------- */
+  vspong: {
+    paddle: 'paddle.png',   // หน้าไม้ขาว เกมย้อมสี
+    ball: 'ball.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 93 แอร์ฮอกกี้ ---------- */
+  vsair: {
+    mallet: 'mallet.png',   // ขาว เกมย้อมสี
+    puck: 'puck.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 94 กดเร็วแข่งกัน ---------- */
+  vstap: {
+    btn: 'btn.png', 'btn-down': 'btn-down.png',   // ขาว เกมย้อมสี
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 95 ดวลปฏิกิริยา ---------- */
+  vsreact: {
+    btn: 'btn.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 96 ดันตกเวที ---------- */
+  vssumo: {
+    ring: 'ring.png', p1: 'p1.png', p2: 'p2.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 97 เก็บของแข่งกัน ---------- */
+  vscatch: {
+    basket: 'basket.png',   // ขาว เกมย้อมสี
+    apple: 'apple.png', star: 'star.png', gift: 'gift.png', candy: 'candy.png', bomb: 'bomb.png',   // ใช้ซ้ำ 1 / 11 / 12 / 90 / 1
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 98 จับคู่ผลัดกัน ---------- */
+  vsmemory: {
+    back: 'back.png',       // หลังไพ่ขาว เกมย้อมสี
+    apple: 'apple.png', orange: 'orange.png', grape: 'grape.png', strawberry: 'strawberry.png', kiwi: 'kiwi.png', pineapple: 'pineapple.png',   // ใช้ซ้ำจากเกม 31
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 99 ยิงเป้าแข่งกัน ---------- */
+  vsshoot: {
+    target: 'target.png', burst: 'burst.png',   // ใช้ซ้ำจากเกม 7 / 13
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 100 วิ่งแข่ง ---------- */
+  vsrun: {
+    p1: 'p1.png', p2: 'p2.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   }
 
 };

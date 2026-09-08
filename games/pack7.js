@@ -189,7 +189,7 @@
   }
 
   /* ---------- 63 กระโดดขึ้นแท่น ----------  PLAT = สัดส่วนภาพแท่น กว้าง:สูง (วัดจากไฟล์) */
-  var PLAT = 4.0;
+  var PLAT = 3.657;
   R('platformjump', {
     time: 0,
     setup: function (a) {
@@ -644,7 +644,7 @@
   });
 
   /* ---------- 68 ข้ามถนน ----------  CAR = สัดส่วนภาพรถแต่ละแบบ กว้าง:สูง (วัดจากไฟล์) */
-  var CAR = { car: 2.0, truck: 2.4 };
+  var CAR = { car: 1.51, truck: 1.939 };
   R('froggy', {
     time: 0,
     setup: function (a) {
@@ -692,7 +692,8 @@
       d.cars.forEach(function (c) {
         var y = L.top + (c.lane + .5) * L.lh;
         /* ภาพรถหันขวา วิ่งไปซ้ายให้พลิก  ยืดให้กว้างเท่าที่สุ่มไว้ */
-        if (!a.spr(c.k, null, c.x + c.w / 2, y, L.size * .8, { flip: c.v < 0, sx: c.w / (L.size * .8 * CAR[c.k]) }))
+        var ch = Math.min(L.size * .9, c.w / CAR[c.k]);   // สูงไม่เกินเลน ถ้ารถยาวค่อยยืดกว้าง
+        if (!a.spr(c.k, null, c.x + c.w / 2, y, ch, { flip: c.v < 0, sx: c.w / (ch * CAR[c.k]) }))
           a.fillRR(c.x, y - L.size * .35, c.w, L.size * .7, L.size * .15, c.col);
       });
       var fy = L.top + (d.row + .5) * L.lh, hop = Math.max(0, (d.hop || 0)), hs = 1 + Math.sin(hop * Math.PI) * .18;
