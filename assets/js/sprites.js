@@ -337,6 +337,147 @@ window.GAME_SPRITES = {
   zigzag: {
     ball: 'ball.png',   // ลูกบอลที่กลิ้ง
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 41 ปาลูกดอกใส่ผลไม้ ---------- */
+  dart: {
+    melon: 'melon.png', orange: 'orange.png', kiwi: 'kiwi.png',   // ผลไม้ผ่าซีก มองจากบน
+    dart: 'dart.png',   // ลูกดอก วางนอน ปลายชี้ขวา
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 42 โยนขวดให้ตั้ง ---------- */
+  bottleflip: {
+    bottle: 'bottle.png',   // ขวดตั้งตรง
+    pad:    'pad.png',      // แท่นวาง ยืดตามความกว้าง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 43 ยิงจุดโทษ ---------- */
+  penalty: {
+    goal:   'goal.png',     // ประตูพร้อมตาข่าย มองตรง  ยืดให้พอดีกรอบ
+    keeper: 'keeper.png',   // ผู้รักษาประตู กางแขน
+    ball:   'ball.png',     // คัดลอกจากเกม 38
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 44 พัตต์กอล์ฟ ---------- */
+  golfputt: {
+    ball: 'ball.png',   // ลูกกอล์ฟ
+    hole: 'hole.png',   // หลุม+ธง ปากหลุมอยู่ล่างสุดของเฟรม
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 45 หนังสติ๊ก ---------- */
+  slingshot: {
+    sling: 'sling.png',   // ง่ามหนังสติ๊ก ไม่มียาง (เกมวาดยางเอง)
+    crate: 'crate.png',   // ลังไม้ ขาว/เทา เกมย้อมสี
+    stone: 'stone.png',   // ก้อนหิน
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 46 ยิงปืนใหญ่ ---------- */
+  cannonball: {
+    barrel: 'barrel.png',   // ลำกล้อง วางนอน ปากกระบอกชี้ขวา
+    base:   'base.png',     // ฐานล้อ
+    wall:   'wall.png',     // แถบกำแพงอิฐแนวตั้ง ยืดตามความสูง
+    target: 'target.png',   // เป้าบนขาตั้ง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 47 ตกปลา ----------  พื้นหลังต้องมีฟ้า 22% บน น้ำที่เหลือ */
+  fishing: {
+    boat:  'boat.png',
+    fish1: 'fish1.png', fish2: 'fish2.png', fish3: 'fish3.png',   // ปลาหันซ้าย (เกมพลิกเอง)
+    boot:  'boot.png',    // ขยะ ห้ามเกี่ยว
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 48 ตู้คีบตุ๊กตา ----------  p1-p4 คัดลอกจากเกม 30 */
+  cranegrab: {
+    claw: 'claw.png',
+    p1: 'p1.png', p2: 'p2.png', p3: 'p3.png', p4: 'p4.png', p5: 'p5.png', p6: 'p6.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 49 โยนห่วง ---------- */
+  ringtoss: {
+    ring: 'ring.png',   // ห่วง มองเฉียง เป็นวงรี
+    peg:  'peg.png',    // เสา ฐานอยู่ล่างสุดของเฟรม
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 50 ปาขวาน ---------- */
+  axethrow: {
+    axe:    'axe.png',      // ขวาน วางนอน ใบมีดอยู่ขวา ด้ามอยู่ซ้าย
+    target: 'target.png',   // เป้าไม้กลม
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 51 ดับไฟให้หมด ---------- */
+  lightsout: {
+    lampOn:  'lamp-on.png',    // ปุ่มไฟติด
+    lampOff: 'lamp-off.png',   // ปุ่มไฟดับ  ตำแหน่ง/ขนาดต้องตรงกับ lamp-on
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 52 หอคอยฮานอย ---------- */
+  hanoi: {
+    disc: 'disc.png',   // จาน 1 ใบ ขาว/เทา เกมย้อมสีและยืดตามขนาด
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 53 เติมสีให้เต็ม ---------- */
+  flood: { bg: 'bg.jpg', bgPort: 'bg-port.jpg' },
+
+  /* ---------- 54 จับคู่สาม ---------- */
+  match3: {
+    g1: 'g1.png', g2: 'g2.png', g3: 'g3.png', g4: 'g4.png', g5: 'g5.png', g6: 'g6.png',   // อัญมณี 6 สี
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 55 รวมเลข 2048 ---------- */
+  merge: {
+    tile: 'tile.png',   // แผ่นสี่เหลี่ยม ขาว/เทา เกมย้อมสีตามเลข
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 56 เทน้ำแยกสี ---------- */
+  watersort: {
+    tube: 'tube.png',   // หลอดแก้วเปล่า โปร่งแสง วาดทับน้ำ
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 57 ต่อท่อ ---------- */
+  pipe: {
+    straight: 'straight.png',   // ท่อตรง แนวตั้ง
+    elbow:    'elbow.png',      // ท่อโค้ง เชื่อม บน+ขวา
+    tee:      'tee.png',        // ท่อสามทาง บน+ขวา+ล่าง
+    cross:    'cross.png',      // ท่อสี่ทาง
+    end:      'end.png',        // ท่อปลายตัน โผล่ด้านบน
+    tap:      'tap.png',        // ก๊อกต้นทาง
+    drain:    'drain.png',      // ท่อระบายปลายทาง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 58 เก็บกู้ระเบิด ---------- */
+  minesweep: {
+    tile: 'tile.png',   // ช่องที่ยังไม่เปิด
+    flag: 'flag.png',   // ธง
+    mine: 'mine.png',   // ระเบิด
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 59 ซูโดกุ 4×4 ----------  ใช้สัญลักษณ์แทนตัวเลข (ตามภาพปก) */
+  sudoku4: {
+    s1: 's1.png', s2: 's2.png', s3: 's3.png', s4: 's4.png',   // วงกลม ดาว สามเหลี่ยม ข้าวหลามตัด
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 60 เรียงตัวเลข ---------- */
+  sequence: {
+    dot: 'dot.png',   // จุดกลม ขาว/เทา เกมย้อมสี
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   }
 
 };
