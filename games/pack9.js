@@ -526,13 +526,13 @@
       } else a.bg(sky, '#050b22');
       var d = a.data, L = d.LO, cx = a.W / 2, cy = a.H * .42;
       /* ดาว/ละอองที่วิ่งสวน: ใหญ่ขึ้น มี 3 ระยะ (parallax) ยิ่งเร็วยิ่งยืดเป็นเส้น */
-      var streak = Math.min(a.mn * .12, Math.max(0, d.vy) * .1);
+      var streak = Math.min(a.mn * .12, Math.max(0, d.vy) * .1);   /* เส้นความเร็ว บางลงครึ่งหนึ่ง */
       for (var i = 0; i < 34; i++) {
         var lyr = i % 3, sx = (i * 191) % a.W, sy = ((i * 271) + alt * (.25 + lyr * .25)) % a.H;
-        var rr = a.mn * (.004 + lyr * .004), al = .25 + t * .5 + lyr * .1;
+        var rr = a.mn * (.004 + lyr * .004), al = Math.min(1, .55 + t * .35 + lyr * .15);
         g.fillStyle = 'rgba(255,255,255,' + al + ')';
         g.beginPath(); g.arc(sx, sy, rr, 0, 6.29); g.fill();
-        if (streak > rr) { g.fillRect(sx - rr * .5, sy, rr, streak * (.5 + lyr * .5)); }
+        if (streak > rr) { g.fillRect(sx - rr * .25, sy, rr * .5, streak * (.5 + lyr * .5)); }
       }
       g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .014;
       g.beginPath(); g.arc(cx, cy, L.Rt, 0, 6.29); g.stroke();

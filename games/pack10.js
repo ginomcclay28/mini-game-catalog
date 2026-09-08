@@ -88,12 +88,13 @@
         if (a.port) {
           /* แนวตั้ง: เชือกตั้ง คนยืนตรงเหมือนแนวนอน P1 อยู่ล่าง P2 อยู่บน */
           a.spr('rope', null, cx, cy - off, a.mn * .11, { rot: -Math.PI / 2 });
-          a.spr('p1', null, cx, cy - off + a.mn * .42, a.mn * .3, { rot: -lean });
-          a.spr('p2', null, cx, cy - off - a.mn * .42, a.mn * .3, { rot: lean });
+          a.spr('p1', null, cx, cy - off + a.mn * .42, a.mn * .3, { rot: -lean, flip: true });
+          a.spr('p2', null, cx, cy - off - a.mn * .42, a.mn * .3, { rot: lean, flip: true });
         } else {
           a.spr('rope', null, cx + off, cy, a.mn * .11);
-          a.spr('p1', null, cx + off - a.mn * .40, cy - a.mn * .02, a.mn * .3, { rot: -lean });
-          a.spr('p2', null, cx + off + a.mn * .40, cy - a.mn * .02, a.mn * .3, { rot: lean });
+          /* ภาพวาดหันหน้าเข้าหากัน แต่ท่าดึงต้องเอนหลังออกจากเชือก -> พลิกทั้งคู่ */
+          a.spr('p1', null, cx + off - a.mn * .40, cy - a.mn * .02, a.mn * .3, { rot: -lean, flip: true });
+          a.spr('p2', null, cx + off + a.mn * .40, cy - a.mn * .02, a.mn * .3, { rot: lean, flip: true });
         }
       } else if (a.port) {
         g.strokeStyle = '#c9a227'; g.lineWidth = a.mn * .02;

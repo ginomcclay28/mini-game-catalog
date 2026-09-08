@@ -560,8 +560,8 @@
     time: 0,
     setup: function (a) {
       a.data.LO = {
-        gy: a.H - a.mn * .22, px: a.W * .22, size: a.mn * .088,
-        G: a.mn * 3.05, jump: -a.mn * 1.08, spd: a.mn * .48
+        gy: a.H - a.mn * .22, px: a.W * .22, size: a.mn * .176,   /* ตัววิ่ง 2 เท่า */
+        G: a.mn * 3.05, jump: -a.mn * 1.32, spd: a.mn * .48
       };
       a.data.y = 0; a.data.v = 0; a.data.ob = []; a.data.spd = a.data.LO.spd; a.data.run = 0;
     },
@@ -571,15 +571,15 @@
       d.dist = (d.dist || 0) + d.spd * dt;          // ระยะทางจริงที่วิ่งไป ใช้เลื่อนลายถนน
       if (d.y > 0 || d.v < 0) { d.v += L.G * dt; d.y -= d.v * dt; if (d.y <= 0) { d.y = 0; d.v = 0; } }
       var lastX = d.ob.length ? d.ob[d.ob.length - 1].x : -Infinity;
-      if (lastX < a.W - a.rnd(a.mn * .55, a.mn * 1.0))
-        d.ob.push({ x: a.W + a.mn * .08, h: a.mn * .095, hit: 0 });   // สูงเท่ากันทุกอัน
+      if (lastX < a.W - a.rnd(a.mn * .75, a.mn * 1.2))
+        d.ob.push({ x: a.W + a.mn * .16, h: a.mn * .19, hit: 0 });   // สูงเท่ากันทุกอัน (2 เท่า)
       d.ob.forEach(function (o) {
         o.x -= d.spd * dt;
         if (!o.hit && o.x < L.px) {
           o.hit = 1; a.add(10); a.beep(800, .06);
           a.puff(L.px, L.gy - d.y - L.size * .5, { n: 5, col: '#ffd23f', spread: 2.4, spd: L.size * 2.5, size: L.size * .08, life: .35 });
         }
-        if (Math.abs(o.x - L.px) < a.mn * .058 && d.y < o.h - a.mn * .008) {
+        if (Math.abs(o.x - L.px) < a.mn * .1 && d.y < o.h - a.mn * .012) {
           a.beep(130, .3, 'sawtooth'); a.shake(.035, .45); a.flash('#ff4646', .3); a.end();
         }
       });
@@ -606,12 +606,15 @@
       d.ob.forEach(function (o) {
         /* สิ่งกีดขวางกำหนดขนาดจากความสูง ฐานแตะพื้นพอดี
            (วาดใหญ่กว่าเส้นชนจริง 15% เพราะภาพมีขอบว่างในตัว จะได้ไม่ดูจิ๋วเทียบกับตัววิ่ง) */
-        if (!a.spr('hurdle', null, o.x, gy - o.h * .53, o.h * 1.15))   // .53 = ชดเชยขอบว่าง 4% ในภาพ ให้ขาแตะพื้นพอดี
-          a.fillRR(o.x - a.mn * .036, gy - o.h, a.mn * .072, o.h, a.mn * .011, a.C.accent);
+        /* ภาพรั้ว: ตัวรั้วอยู่ที่ 19.5%-80% ของเฟรม (วัดจากไฟล์) -> เฟรมสูง h/.605 วางให้ขารั้วแตะพื้นพอดี */
+        var fh = o.h / .605;
+        if (!a.spr('hurdle', null, o.x, gy - fh * .30, fh))
+          a.fillRR(o.x - a.mn * .07, gy - o.h, a.mn * .14, o.h, a.mn * .02, a.C.accent);
       });
       /* ตัววิ่ง: อยู่บนพื้นเด้งขึ้นลงตามจังหวะก้าว  กลางอากาศเอนไปข้างหน้า */
       var onG = d.y <= a.mn * .001, bob = onG ? Math.abs(Math.sin(d.run * 14)) : 0;
-      if (!a.spr('runner', null, L.px, gy - L.size * .55 - d.y - bob * L.size * .06, L.size * 1.45,
+      /* ภาพตัววิ่ง: เท้าอยู่ที่ 95.7% ของเฟรม -> วางให้เท้าแตะพื้น */
+      if (!a.spr('runner', null, L.px, gy - L.size * 1.45 * .457 - d.y - bob * L.size * .06, L.size * 1.45,
                  { rot: onG ? 0 : -.18, sy: 1 + bob * .05, sx: 1 - bob * .04 })) {
         g.save(); g.translate(L.px, gy - L.size * .5 - d.y);
         g.scale(-1, 1);                        /* ให้ตัววิ่งหันไปทางขวา */
