@@ -340,8 +340,10 @@
       /* ไอเทม: แคปซูลสี + ตัวอักษร + ชื่อ */
       d.it.forEach(function (o) {
         var r = L.er * .8 * (1 + Math.sin(a.now * 6) * .06);
-        a.circle(o.x, o.y, r * 1.15, 'rgba(255,255,255,.25)'); a.circle(o.x, o.y, r, o.t.col);
-        a.text(o.t.ch, o.x, o.y, r * 1.2, '#1b1442');
+        if (!a.spr('it-' + o.t.k, null, o.x, o.y, r * 2.6, { rot: Math.sin(a.now * 3) * .12 })) {
+          a.circle(o.x, o.y, r * 1.15, 'rgba(255,255,255,.25)'); a.circle(o.x, o.y, r, o.t.col);
+          a.text(o.t.ch, o.x, o.y, r * 1.2, '#1b1442');
+        }
         a.text(a.txt(o.t), o.x, o.y + r * 1.7, a.mn * .026, '#fff');
       });
       var lean = Math.max(-.3, Math.min(.3, (d.tx - d.x) * .004));

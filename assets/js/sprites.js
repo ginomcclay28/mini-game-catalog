@@ -503,6 +503,7 @@ window.GAME_SPRITES = {
   spacewar: {
     ship:  'ship.png',    // ยานผู้เล่น หัวชี้ขึ้น
     enemy: 'enemy.png',   // ยานศัตรู หัวชี้ลง
+    'it-rate': 'it-rate.png', 'it-spread': 'it-spread.png', 'it-laser': 'it-laser.png', 'it-bomb': 'it-bomb.png', 'it-shield': 'it-shield.png',   // ไอเทมอัปเกรด
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   },
 
