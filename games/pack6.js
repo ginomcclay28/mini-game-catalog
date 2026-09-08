@@ -89,12 +89,20 @@
         a.fillRR(cx - L.pw * .42, L.base, L.pw * .84, a.mn * .022, a.mn * .01, '#5a3a18');
         a.fillRR(cx - a.mn * .012, L.base - L.ph, a.mn * .024, L.ph, a.mn * .01, '#5a3a18');
         if (d.sel === p) { g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .008; a.rr(cx - L.pw * .44, L.base - L.ph - a.mn * .03, L.pw * .88, L.ph + a.mn * .06, a.mn * .02); g.stroke(); }
+        var topY = -1;
         d.pegs[p].forEach(function (disc, i) {
           var w = L.unit * (disc + 1.4), h = L.dh, col = 'hsl(' + (disc * 55 + 190) + ',75%,58%)';
           var lift = (d.sel === p && i === d.pegs[p].length - 1) ? a.mn * .03 : 0;   // จานบนสุดที่เลือกยกขึ้น
-          if (!a.sprTint('disc', col, null, cx, L.base - (i + .5) * h - a.mn * .004 - lift, h - a.mn * .006, { sx: w / ((h - a.mn * .006) * DISC) }))
+          var dy = L.base - (i + .5) * h - a.mn * .004 - lift;
+          if (!a.sprTint('disc', col, null, cx, dy, h - a.mn * .006, { sx: w / ((h - a.mn * .006) * DISC) }))
             a.fillRR(cx - w / 2, L.base - (i + 1) * h - a.mn * .004 - lift, w, h - a.mn * .006, h * .3, col);
+          topY = dy - h * .10;   /* ระดับรูของจานบนสุด */
         });
+        /* วาดเสาทับอีกรอบเฉพาะส่วนที่โผล่พ้นรูจานบนสุด ให้เห็นเสาลอดรู */
+        if (topY > 0) {
+          g.save(); g.beginPath(); g.rect(cx - a.mn * .02, L.base - L.ph, a.mn * .04, topY - (L.base - L.ph)); g.clip();
+          a.fillRR(cx - a.mn * .012, L.base - L.ph, a.mn * .024, L.ph, a.mn * .01, '#5a3a18'); g.restore();
+        }
       }
       a.head(a.txt({ th: 'ย้ายทั้งกองไปเสาขวา • ตาที่ใช้ ' + d.mv, en: 'Move the stack to the right peg • ' + d.mv + ' moves' }));
     }
@@ -253,7 +261,7 @@
       var dx = x - d.sw.x, dy = y - d.sw.y; d.sw = null;
       if (Math.abs(dx) < a.mn * .04 && Math.abs(dy) < a.mn * .04) return;
       var dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u');
-      if (slide(a, dir)) { spawn(a); a.beep(560, .06); a.shake(.004, .08); if (!canMove(a.data)) { a.beep(160, .3, 'square'); a.shake(.03, .4); a.flash('#ff4646', .3); a.end(); } }
+      if (slide(a, dir)) { spawn(a); a.beep(560, .06); a.shake(.004, .08); if (!canMove(a.data)) { a.beep(160, .3, 'square'); a.shake(.03, .4); a.flash('#ff4646', .3); a.end(a.txt({ th: 'เต็มกระดาน — ' + a.score + ' คะแนน', en: 'Board full — ' + a.score + ' points' })); } }
     },
     key: function (k, a) {
       var map = { ArrowLeft: 'l', ArrowRight: 'r', ArrowUp: 'u', ArrowDown: 'd' };
@@ -273,6 +281,9 @@
           a.text(v + '', x + s / 2, y + s / 2, fs, '#fff');
         }
       }
+      var best = 0; d.b.forEach(function (v) { if (v > best) best = v; });
+      a.text(a.txt({ th: 'คะแนน ' + a.score + '  •  สูงสุด ' + best, en: 'Score ' + a.score + '  •  Best tile ' + best }),
+        a.W / 2, L.oy + L.s * 4 + a.mn * .05, a.mn * .04, 'rgba(255,255,255,.9)');
       a.head(a.txt({ th: 'ปัดนิ้วเพื่อรวมเลขที่เท่ากัน', en: 'Swipe to merge equal tiles' }));
     }
   });
@@ -345,10 +356,18 @@
         var b = tube(a, i), lift = d.sel === i ? a.mn * .03 : 0;
         var art = a.hasSpr('tube');
         if (!art) a.fillRR(b.x, b.y - lift, L.tw, L.th, L.tw * .3, 'rgba(255,255,255,.16)');
+        /* น้ำสี: ตัดตามรูปด้านในหลอด (ก้นกลม) แต่ละชั้นเป็นแถบเต็ม มีเส้นบางคั่น */
+        var ix0 = b.x + L.tw * .15, ix1 = b.x + L.tw * .85, iy0 = b.y - lift, iy1 = b.y - lift + L.th * .965, ir = (ix1 - ix0) / 2;
+        g.save(); g.beginPath();
+        g.moveTo(ix0, iy0); g.lineTo(ix0, iy1 - ir); g.arc(ix0 + ir, iy1 - ir, ir, Math.PI, 0, true); g.lineTo(ix1, iy0); g.closePath(); g.clip();
         d.t[i].forEach(function (c, k) {
-          var hh = L.th / L.cap;
-          a.fillRR(b.x + L.tw * .12, b.y - lift + L.th - (k + 1) * hh - L.th * .02, L.tw * .76, hh - 2, hh * .18, d.pal[c]);
+          var hh = (L.th * .965) / L.cap, y1 = iy1 - k * hh;
+          g.fillStyle = d.pal[c]; g.fillRect(ix0, y1 - hh, ix1 - ix0, hh + 1);
+          if (k) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(ix0, y1 - 1, ix1 - ix0, 2); }
         });
+        /* ไฮไลต์แนวตั้งบนผิวน้ำ */
+        if (d.t[i].length) { g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(ix0 + (ix1 - ix0) * .12, iy1 - d.t[i].length * (L.th * .965 / L.cap), (ix1 - ix0) * .12, L.th); }
+        g.restore();
         /* หลอดแก้ว วาดทับน้ำ ยืดให้พอดี tw x th */
         if (art) a.spr('tube', null, b.x + L.tw / 2, b.y - lift + L.th / 2, L.th, { sx: L.tw / (L.th * TUBE) });
         g.strokeStyle = d.sel === i ? a.C.accent : (art ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,.4)');
@@ -401,23 +420,38 @@
     1: ['end', 0], 2: ['end', 1], 4: ['end', 2], 8: ['end', 3]
   };
   R('pipe', {
-    setup: function (a) { a.data.lv = 1; mkPipe(a); },
+    setup: function (a) { a.data.lv = 1; a.data.win = null; mkPipe(a); },
+    update: function (dt, a) {
+      var d = a.data, L = d.LO, n = d.n, w = d.win; if (!w) return;
+      w.t += dt;
+      /* น้ำไหลไปตามท่อ ถึงท่อระบายแล้วค้างแป๊บ ค่อยไปด่านถัดไป */
+      var prog = Math.min(1, w.t / 1.4);
+      if (prog >= 1 && !w.done) {
+        w.done = 1; a.beep(1200, .3, 'triangle'); a.flash('#2fe08a', .25); a.shake(.014, .3);
+        a.puff(L.ox + (n - .5) * L.s, L.oy + (n - .5) * L.s, { n: 18, col: '#7ec8ff', spread: 3.14, spd: L.s * 3, size: L.s * .08, life: .7 });
+      } else if (!w.done && Math.random() < dt * 30) {
+        var pt = flowPoint(d, prog);
+        a.puff(pt.x, pt.y, { n: 1, col: 'rgba(200,240,255,.8)', spread: 6.28, spd: L.s * .6, size: L.s * .04, life: .35, grav: 0 });
+      }
+      if (w.t > 2.4) { d.win = null; d.lv++; mkPipe(a); }
+    },
     down: function (x, y, a) {
       var d = a.data, L = d.LO, n = d.n;
+      if (d.win) return;
       var c = Math.floor((x - L.ox) / L.s), r = Math.floor((y - L.oy) / L.s);
       if (c < 0 || r < 0 || c >= n || r >= n) return;
       var cell = d.g[r][c]; if (!cell.m) return;
       cell.m = ((cell.m << 1) | (cell.m >> 3)) & 15;
       a.beep(520, .05); a.shake(.004, .08);
-      if (connected(d)) {
-        a.add(120); a.addTime(25); a.beep(1200, .3, 'triangle'); a.flash('#2fe08a', .25); a.shake(.014, .3);
-        a.puff(L.ox + (n - .5) * L.s, L.oy + (n - .5) * L.s, { n: 18, col: '#7ec8ff', spread: 3.14, spd: L.s * 3, size: L.s * .08, life: .7 });
-        d.lv++; mkPipe(a);
+      var path = connected(d, true);
+      if (path) {
+        a.add(120); a.addTime(25); a.beep(900, .15);
+        d.win = { t: 0, path: path, done: 0 };
       }
     },
     draw: function (g, a) {
       a.bg('#08243a', '#0d4a5e');
-      var d = a.data, L = d.LO, n = d.n, ok = connected(d);
+      var d = a.data, L = d.LO, n = d.n, ok = !!d.win;
       for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) {
         var x = L.ox + c * L.s, y = L.oy + r * L.s, cell = d.g[r][c];
         a.fillRR(x + 1, y + 1, L.s - 2, L.s - 2, L.s * .1, 'rgba(255,255,255,.06)');
@@ -439,9 +473,34 @@
         if (r === 0 && c === 0) { if (!a.spr('tap', null, cx, cy, L.s * .8)) a.circle(cx, cy, L.s * .2, a.C.good); }
         if (r === n - 1 && c === n - 1) { if (!a.spr('drain', null, cx, cy, L.s * .8)) a.circle(cx, cy, L.s * .2, a.C.bad); }
       }
+      /* น้ำไหลตามเส้นทางท่อตอนชนะ */
+      if (d.win) {
+        var prog = Math.min(1, d.win.t / 1.4), pts = d.win.path, w2 = L.s * .17;
+        var total = (pts.length - 1) * L.s, len = total * prog, acc = 0;
+        g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+        [[w2 * 1.6, 'rgba(40,120,220,.9)'], [w2 * .8, 'rgba(160,230,255,.95)']].forEach(function (st) {
+          g.strokeStyle = st[1]; g.lineWidth = st[0]; g.beginPath();
+          g.moveTo(L.ox + (pts[0][1] + .5) * L.s, L.oy + (pts[0][0] + .5) * L.s);
+          acc = 0;
+          for (var i = 1; i < pts.length; i++) {
+            var x0 = L.ox + (pts[i - 1][1] + .5) * L.s, y0 = L.oy + (pts[i - 1][0] + .5) * L.s;
+            var x1 = L.ox + (pts[i][1] + .5) * L.s, y1 = L.oy + (pts[i][0] + .5) * L.s;
+            if (acc + L.s <= len) { g.lineTo(x1, y1); acc += L.s; }
+            else { var f = (len - acc) / L.s; g.lineTo(x0 + (x1 - x0) * f, y0 + (y1 - y0) * f); break; }
+          }
+          g.stroke();
+        });
+        g.restore();
+        if (d.win.done) a.text(a.txt({ th: 'น้ำไหลถึงแล้ว! +120', en: 'Water through! +120' }), a.W / 2, L.oy + n * L.s + a.mn * .05, a.mn * .05, a.C.good);
+      }
       a.head(a.txt({ th: 'ด่าน ' + d.lv + ' — หมุนท่อให้เชื่อมเขียวถึงแดง', en: 'Level ' + d.lv + ' — connect green to red' }));
     }
   });
+  /* ตำแหน่งบนเส้นทางน้ำที่สัดส่วน prog (0-1) */
+  function flowPoint(d, prog) {
+    var L = d.LO, pts = d.win.path, t = prog * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(t)), f = t - i;
+    return { x: L.ox + (pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f + .5) * L.s, y: L.oy + (pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f + .5) * L.s };
+  }
   function mkPipe(a) {
     var d = a.data;
     d.n = Math.min(6, 4 + Math.floor(d.lv / 2));
@@ -468,19 +527,26 @@
     }
     if (connected(d)) d.g[0][0].m = ((d.g[0][0].m << 1) | (d.g[0][0].m >> 3)) & 15;
   }
-  function connected(d) {
-    var n = d.n, seen = {}, st = [[0, 0]];
+  /* เชื่อมถึงกันไหม  withPath = true จะคืนลำดับช่องจากก๊อกถึงท่อระบาย (ใช้วาดน้ำไหล) */
+  function connected(d, withPath) {
+    var n = d.n, seen = {}, st = [[0, 0]], par = {};
     var dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]], opp = [4, 8, 1, 2];
     if (!d.g[0][0].m) return false;
     while (st.length) {
-      var p = st.pop(), r = p[0], c = p[1], key = r + ',' + c;
+      var p = st.shift(), r = p[0], c = p[1], key = r + ',' + c;
       if (seen[key]) continue; seen[key] = 1;
-      if (r === n - 1 && c === n - 1) return true;
+      if (r === n - 1 && c === n - 1) {
+        if (!withPath) return true;
+        var path = [], k = key;
+        while (k) { var q = k.split(','); path.unshift([+q[0], +q[1]]); k = par[k]; }
+        return path;
+      }
       for (var b = 0; b < 4; b++) {
         if (!(d.g[r][c].m & (1 << b))) continue;
         var nr = r + dirs[b][1], nc = c + dirs[b][0];
         if (nr < 0 || nc < 0 || nr >= n || nc >= n) continue;
-        if (d.g[nr][nc].m & opp[b]) st.push([nr, nc]);
+        var nk = nr + ',' + nc;
+        if ((d.g[nr][nc].m & opp[b]) && !seen[nk]) { if (!(nk in par)) par[nk] = key; st.push([nr, nc]); }
       }
     }
     return false;

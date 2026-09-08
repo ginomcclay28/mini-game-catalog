@@ -235,24 +235,54 @@
     }
   });
 
-  /* ---------- 64 ยิงยานอวกาศ ---------- */
+  /* ---------- 64 ยิงยานอวกาศ ----------
+     ไอเทมตกลงมาให้เก็บ: R ยิงไวขึ้น (ซ้อนได้)  S เพิ่มแฉก (สูงสุด 5)  L เลเซอร์ 6 วิ  B กระสุนระเบิด 12 นัด  ◎ เกราะ (สูงสุด 3) */
+  var ITEMS = [
+    { k: 'rate', ch: 'R', col: '#00d4ff', th: 'ยิงไวขึ้น', en: 'Faster fire' },
+    { k: 'spread', ch: 'S', col: '#ffd23f', th: 'เพิ่มแฉก', en: 'More shots' },
+    { k: 'laser', ch: 'L', col: '#ff2e88', th: 'เลเซอร์!', en: 'LASER!' },
+    { k: 'bomb', ch: 'B', col: '#ff8a3d', th: 'กระสุนระเบิด', en: 'Bomb shots' },
+    { k: 'shield', ch: '◎', col: '#2fe08a', th: 'เกราะ +1', en: 'Shield +1' }
+  ];
   R('spacewar', {
     time: 0, lives: 3,
     setup: function (a) {
       a.data.LO = { pr: a.mn * .045, py: a.H - a.mn * .13, bs: a.mn * 1.1, er: a.mn * .045 };
-      a.data.x = a.W / 2; a.data.tx = a.W / 2; a.data.b = []; a.data.e = []; a.data.eb = [];
-      a.data.fire = 0; a.data.sp = .8; a.data.t = 0;
+      a.data.x = a.W / 2; a.data.tx = a.W / 2; a.data.b = []; a.data.e = []; a.data.eb = []; a.data.it = [];
+      a.data.fire = 0; a.data.sp = .8; a.data.t = 0; a.data.isp = 4;
+      a.data.rate = 0; a.data.spread = 1; a.data.laser = 0; a.data.bombs = 0; a.data.shield = 0;
+      a.data.kills = 0; a.data.msg = ''; a.data.mt = 0; a.data.hitT = 0;
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
-      d.t += dt;
+      d.t += dt; if (d.mt > 0) d.mt -= dt; if (d.hitT > 0) d.hitT -= dt;
       d.x += (d.tx - d.x) * Math.min(1, dt * 14);
+      /* ยิงอัตโนมัติ: ช่วงห่างสั้นลงตามระดับ R, จำนวนแฉกตาม S */
       d.fire -= dt;
-      if (d.fire <= 0) { d.b.push({ x: d.x, y: L.py - L.pr }); d.fire = .26; }
+      if (d.fire <= 0 && d.laser <= 0) {
+        var n = d.spread, spreadAng = .18;
+        for (var q = 0; q < n; q++) {
+          var ang = n === 1 ? 0 : (q - (n - 1) / 2) * spreadAng;
+          d.b.push({ x: d.x, y: L.py - L.pr, vx: Math.sin(ang) * L.bs, vy: -Math.cos(ang) * L.bs, bomb: d.bombs > 0 });
+        }
+        if (d.bombs > 0) d.bombs--;
+        d.fire = Math.max(.08, .26 * Math.pow(.8, d.rate));
+        a.beep(d.bombs > 0 ? 260 : 620, .03, 'square');
+      }
+      if (d.laser > 0) d.laser -= dt;
       d.fl = (d.fl || 0) + dt;
       if (d.fl > .04) { d.fl = 0; a.puff(d.x, L.py + L.pr * 1.2, { n: 2, col: '#5ec8ff', ang: Math.PI / 2, spread: .7, spd: L.pr * 6, size: L.pr * .22, life: .25, grav: 0 }); }
-      d.b.forEach(function (o) { o.y -= L.bs * dt; });
-      d.b = d.b.filter(function (o) { return o.y > -10; });
+      d.b.forEach(function (o) { o.x += o.vx * dt; o.y += o.vy * dt; });
+      d.b = d.b.filter(function (o) { return o.y > -10 && o.x > -10 && o.x < a.W + 10; });
+      /* ไอเทม */
+      d.isp -= dt;
+      if (d.isp <= 0) { d.it.push({ x: a.rnd(L.er * 2, a.W - L.er * 2), y: -L.er, v: a.mn * .22, t: a.pick(ITEMS) }); d.isp = a.rnd(5, 8); }
+      for (var m = d.it.length - 1; m >= 0; m--) {
+        var it = d.it[m]; it.y += it.v * dt;
+        if (Math.hypot(it.x - d.x, it.y - L.py) < L.pr * 2.2) {
+          d.it.splice(m, 1); pickup(a, it.t);
+        } else if (it.y > a.H + L.er) d.it.splice(m, 1);
+      }
       d.sp -= dt;
       if (d.sp <= 0) {
         d.e.push({ x: a.rnd(L.er, a.W - L.er), y: -L.er, v: a.mn * (.16 + Math.min(.3, d.t * .01)), f: a.rnd(1, 2.4) });
@@ -261,22 +291,28 @@
       for (var i = d.e.length - 1; i >= 0; i--) {
         var e = d.e[i]; e.y += e.v * dt; e.f -= dt;
         if (e.f <= 0) { e.f = a.rnd(1.4, 3); d.eb.push({ x: e.x, y: e.y, v: a.mn * .5 }); }
-        var hit = false;
-        for (var k = d.b.length - 1; k >= 0; k--) {
-          if (Math.hypot(d.b[k].x - e.x, d.b[k].y - e.y) < L.er) { d.b.splice(k, 1); hit = true; break; }
+        var hit = false, boom = null;
+        if (d.laser > 0 && Math.abs(e.x - d.x) < L.er * .9 && e.y < L.py) hit = true;
+        for (var k = d.b.length - 1; k >= 0 && !hit; k--) {
+          if (Math.hypot(d.b[k].x - e.x, d.b[k].y - e.y) < L.er) { if (d.b[k].bomb) boom = { x: e.x, y: e.y }; d.b.splice(k, 1); hit = true; }
         }
         if (hit) {
-          d.e.splice(i, 1); a.add(15); a.beep(800, .07); a.shake(.006, .1);
-          a.puff(e.x, e.y, { n: 10, col: '#ff8a3d', spread: 3.14, spd: L.er * 6, size: L.er * .18, life: .45, grav: 0 }); continue;
+          killEnemy(a, i);
+          if (boom) {   /* ระเบิดวงกว้าง เก็บตัวรอบ ๆ ไปด้วย */
+            a.shake(.014, .2); a.flash('#ff8a3d', .1);
+            a.puff(boom.x, boom.y, { n: 22, col: '#ffb060', spread: 6.28, spd: L.er * 9, size: L.er * .25, life: .5, grav: 0 });
+            for (var z = d.e.length - 1; z >= 0; z--) if (Math.hypot(d.e[z].x - boom.x, d.e[z].y - boom.y) < L.er * 4) killEnemy(a, z);
+          }
+          continue;
         }
         if (e.y > a.H + L.er || Math.hypot(e.x - d.x, e.y - L.py) < L.er + L.pr) {
           d.e.splice(i, 1);
-          if (e.y <= a.H + L.er) { a.beep(150, .3, 'sawtooth'); a.shake(.03, .4); a.flash('#ff4646', .25); if (a.loseLife() <= 0) return; }
+          if (e.y <= a.H + L.er && shipHit(a)) return;
         }
       }
       for (var j = d.eb.length - 1; j >= 0; j--) {
         var b = d.eb[j]; b.y += b.v * dt;
-        if (Math.hypot(b.x - d.x, b.y - L.py) < L.pr) { d.eb.splice(j, 1); a.beep(150, .3, 'sawtooth'); a.shake(.03, .4); a.flash('#ff4646', .25); if (a.loseLife() <= 0) return; }
+        if (Math.hypot(b.x - d.x, b.y - L.py) < L.pr) { d.eb.splice(j, 1); if (shipHit(a)) return; }
         else if (b.y > a.H) d.eb.splice(j, 1);
       }
     },
@@ -289,27 +325,79 @@
         var sx = (i * 179) % a.W, sy = ((i * 233) + d.t * 60) % a.H;
         g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(sx, sy, 2, 2);
       }
-      d.b.forEach(function (o) { a.fillRR(o.x - 3, o.y - a.mn * .025, 6, a.mn * .05, 3, a.C.accent); });
+      /* เลเซอร์ */
+      if (d.laser > 0) {
+        var lw = L.er * 1.8 * (d.laser < .5 ? d.laser * 2 : 1) * (1 + Math.sin(a.now * 40) * .08);
+        g.fillStyle = 'rgba(255,46,136,.35)'; g.fillRect(d.x - lw / 2, 0, lw, L.py - L.pr);
+        g.fillStyle = 'rgba(255,255,255,.9)'; g.fillRect(d.x - lw * .18, 0, lw * .36, L.py - L.pr);
+      }
+      d.b.forEach(function (o) {
+        if (o.bomb) { a.circle(o.x, o.y, a.mn * .014, '#ff8a3d'); a.circle(o.x, o.y, a.mn * .007, '#fff'); }
+        else { g.save(); g.translate(o.x, o.y); g.rotate(Math.atan2(o.vy, o.vx) + Math.PI / 2); a.fillRR(-3, -a.mn * .025, 6, a.mn * .05, 3, a.C.accent); g.restore(); }
+      });
       d.eb.forEach(function (o) { a.circle(o.x, o.y, a.mn * .012, a.C.bad); a.circle(o.x, o.y, a.mn * .006, '#fff'); });
-      d.e.forEach(function (o) { a.spr('enemy', '\ud83d\udc7e', o.x, o.y, L.er * 2.4, { rot: Math.sin(a.now * 4 + o.x) * .1 }); });
+      d.e.forEach(function (o) { a.spr('enemy', '👾', o.x, o.y, L.er * 2.4, { rot: Math.sin(a.now * 4 + o.x) * .1 }); });
+      /* ไอเทม: แคปซูลสี + ตัวอักษร + ชื่อ */
+      d.it.forEach(function (o) {
+        var r = L.er * .8 * (1 + Math.sin(a.now * 6) * .06);
+        a.circle(o.x, o.y, r * 1.15, 'rgba(255,255,255,.25)'); a.circle(o.x, o.y, r, o.t.col);
+        a.text(o.t.ch, o.x, o.y, r * 1.2, '#1b1442');
+        a.text(a.txt(o.t), o.x, o.y + r * 1.7, a.mn * .026, '#fff');
+      });
       var lean = Math.max(-.3, Math.min(.3, (d.tx - d.x) * .004));
       if (!a.spr('ship', null, d.x, L.py, L.pr * 3.0, { rot: lean })) {
         g.save(); g.translate(d.x, L.py); g.rotate(-Math.PI / 4);
         EM(g, '🚀', 0, 0, L.pr * 2.2); g.restore();
       }
-      a.head(a.txt({ th: 'ลากบังคับยาน • ยิงเอง', en: 'Drag to steer • it fires by itself' }));
+      /* เกราะ */
+      if (d.shield > 0 || d.hitT > 0) {
+        g.strokeStyle = d.hitT > 0 ? 'rgba(255,255,255,' + d.hitT * 3 + ')' : 'rgba(47,224,138,.8)'; g.lineWidth = a.mn * .006 + (d.hitT > 0 ? a.mn * .006 : 0);
+        for (var s2 = 0; s2 < Math.max(1, d.shield); s2++) { g.beginPath(); g.arc(d.x, L.py, L.pr * (1.9 + s2 * .25), 0, 6.29); g.stroke(); }
+      }
+      /* สถานะ: เวลารอด / ยิงได้ / อัปเกรด */
+      var up = a.txt({ th: 'ยิงไว ' + (d.rate + 1) + '  แฉก ' + d.spread + (d.bombs ? '  ระเบิด ' + d.bombs : '') + (d.shield ? '  เกราะ ' + d.shield : ''), en: 'Rate ' + (d.rate + 1) + '  Shots ' + d.spread + (d.bombs ? '  Bombs ' + d.bombs : '') + (d.shield ? '  Shield ' + d.shield : '') });
+      a.text(a.txt({ th: 'รอด ' + Math.floor(d.t) + ' วิ  •  ยิงได้ ' + d.kills + ' ตัว', en: Math.floor(d.t) + ' s  •  ' + d.kills + ' kills' }), a.W / 2, a.H - a.mn * .045, a.mn * .036, 'rgba(255,255,255,.9)');
+      a.text(up, a.W / 2, a.H - a.mn * .015, a.mn * .028, 'rgba(255,255,255,.6)');
+      if (d.mt > 0) a.text(d.msg, d.x, L.py - L.pr * 3.2, a.mn * .045, a.C.accent);
+      a.head(a.txt({ th: 'ลากบังคับยาน • เก็บไอเทมอัปเกรดปืน', en: 'Drag to steer • grab items to upgrade' }));
     }
   });
+  function killEnemy(a, i) {
+    var d = a.data, L = d.LO, e = d.e[i]; if (!e) return;
+    d.e.splice(i, 1); d.kills++; a.add(15); a.beep(800, .07); a.shake(.006, .1);
+    a.puff(e.x, e.y, { n: 10, col: '#ff8a3d', spread: 3.14, spd: L.er * 6, size: L.er * .18, life: .45, grav: 0 });
+  }
+  /* โดนโจมตี: มีเกราะ = เสียเกราะ ไม่เสียชีวิต  คืน true ถ้าเกมจบ */
+  function shipHit(a) {
+    var d = a.data;
+    if (d.shield > 0) { d.shield--; d.hitT = .3; a.beep(500, .12, 'triangle'); a.shake(.01, .15); return false; }
+    a.beep(150, .3, 'sawtooth'); a.shake(.03, .4); a.flash('#ff4646', .25);
+    if (a.loseLife() <= 0) { a.end(a.txt({ th: 'รอด ' + Math.floor(d.t) + ' วิ • ยิงได้ ' + d.kills + ' ตัว', en: 'Survived ' + Math.floor(d.t) + ' s • ' + d.kills + ' kills' })); return true; }
+    return false;
+  }
+  function pickup(a, t) {
+    var d = a.data, L = d.LO;
+    if (t.k === 'rate') d.rate++;
+    else if (t.k === 'spread') d.spread = Math.min(5, d.spread + 1);
+    else if (t.k === 'laser') d.laser = 6;
+    else if (t.k === 'bomb') d.bombs += 12;
+    else if (t.k === 'shield') d.shield = Math.min(3, d.shield + 1);
+    d.msg = a.txt(t); d.mt = 1.2; a.add(10);
+    a.beep(1100, .15, 'triangle'); a.flash(t.col, .12); a.shake(.006, .1);
+    a.puff(d.x, L.py, { n: 14, col: t.col, spread: 6.28, spd: L.pr * 5, size: L.pr * .2, life: .5, grav: 0 });
+  }
 
-  /* ---------- 65 ป้องกันฐาน ---------- */
+  /* ---------- 65 ป้องกันฐาน ----------  สกิลสายฟ้า 3 ครั้ง: แตะที่ฐาน ช็อตทั้งจอ */
   R('defendbase', {
     setup: function (a) {
       a.data.LO = { br: a.mn * .09, er: a.mn * .042 };
       a.data.e = []; a.data.sp = .7; a.data.hp = 5; a.data.t = 0; a.data.fx = 0;
+      a.data.skill = 3; a.data.bolt = null; a.data.kills = 0;
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
       d.t += dt; if (d.fx > 0) d.fx -= dt;
+      if (d.bolt) { d.bolt.t -= dt; if (d.bolt.t <= 0) d.bolt = null; }
       d.sp -= dt;
       if (d.sp <= 0) {
         var ang = a.rnd(0, 6.283), rr = Math.max(a.W, a.H) * .6;
@@ -322,16 +410,26 @@
         o.x += dx / len * o.v * dt; o.y += dy / len * o.v * dt;
         if (len < L.br) {
           d.e.splice(i, 1); d.hp--; d.fx = .35; a.beep(160, .3, 'sawtooth'); a.shake(.03, .4);
-          if (d.hp <= 0) return a.end(a.txt({ th: 'ฐานถูกทำลาย', en: 'The base fell' }));
+          if (d.hp <= 0) return a.end(a.txt({ th: 'ฐานถูกทำลาย • ยิงได้ ' + d.kills + ' ตัว', en: 'The base fell • ' + d.kills + ' kills' }));
         }
       }
     },
     down: function (x, y, a) {
-      var d = a.data, L = d.LO;
+      var d = a.data, L = d.LO, cx = a.W / 2, cy = a.H / 2;
+      /* แตะฐาน = ใช้สกิลสายฟ้า */
+      if (Math.hypot(x - cx, y - cy) < L.br * 1.3) {
+        if (d.skill <= 0) { a.beep(180, .12, 'square'); return; }
+        d.skill--; a.beep(1500, .25, 'sawtooth'); a.flash('#ffffff', .22); a.shake(.03, .45);
+        var targets = d.e.map(function (o) { return { x: o.x, y: o.y }; });
+        targets.forEach(function (o) { a.puff(o.x, o.y, { n: 12, col: '#9be0ff', spread: 6.28, spd: L.er * 7, size: L.er * .2, life: .5, grav: 0 }); });
+        a.add(targets.length * 15); d.kills += targets.length; d.e = [];
+        d.bolt = { t: .45, pts: targets.length ? targets : [{ x: cx + a.rnd(-a.W * .3, a.W * .3), y: cy + a.rnd(-a.H * .3, a.H * .3) }] };
+        return;
+      }
       for (var i = d.e.length - 1; i >= 0; i--) {
         if (Math.hypot(x - d.e[i].x, y - d.e[i].y) < L.er * 1.2) {
           a.puff(d.e[i].x, d.e[i].y, { n: 10, col: '#ff8a3d', spread: 3.14, spd: L.er * 6, size: L.er * .18, life: .45, grav: 0 });
-          d.e.splice(i, 1); a.add(15); a.beep(900, .07); a.shake(.006, .1); return;
+          d.e.splice(i, 1); a.add(15); d.kills++; a.beep(900, .07); a.shake(.006, .1); return;
         }
       }
     },
@@ -349,10 +447,32 @@
         var ang = Math.atan2(cy - o.y, cx - o.x);   // หันหน้าเข้าหาฐาน
         a.spr(o.e.k, o.e.e, o.x, o.y, L.er * 2.4, { rot: ang + Math.PI / 2, sy: 1 + Math.sin(a.now * 10 + o.x) * .08 });
       });
+      /* สายฟ้าจากฐานไปทุกตัว วาดเป็นเส้นหยักสุ่มทุกเฟรม */
+      if (d.bolt) {
+        var al = Math.min(1, d.bolt.t * 3);
+        g.save(); g.lineCap = 'round';
+        d.bolt.pts.forEach(function (p) {
+          [[a.mn * .014, 'rgba(120,200,255,' + al * .5 + ')'], [a.mn * .005, 'rgba(255,255,255,' + al + ')']].forEach(function (st) {
+            g.strokeStyle = st[1]; g.lineWidth = st[0]; g.beginPath(); g.moveTo(cx, cy);
+            var segs = 7;
+            for (var i = 1; i <= segs; i++) {
+              var f = i / segs, jx = (i === segs) ? 0 : a.rnd(-1, 1) * a.mn * .03, jy = (i === segs) ? 0 : a.rnd(-1, 1) * a.mn * .03;
+              g.lineTo(cx + (p.x - cx) * f + jx, cy + (p.y - cy) * f + jy);
+            }
+            g.stroke();
+          });
+        });
+        g.restore();
+        g.fillStyle = 'rgba(160,220,255,' + al * .18 + ')'; g.fillRect(0, 0, a.W, a.H);
+      }
+      /* ฐานกะพริบเบา ๆ ตอนยังมีสกิล */
+      if (d.skill > 0) { g.strokeStyle = 'rgba(160,220,255,' + (.35 + Math.sin(a.now * 5) * .2) + ')'; g.lineWidth = a.mn * .006; g.beginPath(); g.arc(cx, cy, L.br * 1.3, 0, 6.29); g.stroke(); }
       for (var i = 0; i < 5; i++)
         a.circle(a.mn * .06 + i * a.mn * .05, a.H - a.mn * .06, a.mn * .017, i < d.hp ? a.C.bad : 'rgba(255,255,255,.2)');
+      for (var s2 = 0; s2 < 3; s2++) a.text('⚡', a.W - a.mn * .06 - s2 * a.mn * .06, a.H - a.mn * .06, a.mn * .05, s2 < d.skill ? '#9be0ff' : 'rgba(255,255,255,.2)');
+      a.text(a.txt({ th: 'ยิงได้ ' + d.kills + ' ตัว', en: d.kills + ' kills' }), a.W / 2, a.H - a.mn * .05, a.mn * .034, 'rgba(255,255,255,.8)');
       if (d.fx > 0) { g.fillStyle = 'rgba(255,82,82,' + d.fx + ')'; g.fillRect(0, 0, a.W, a.H); }
-      a.head(a.txt({ th: 'แตะทำลายศัตรูก่อนถึงฐาน', en: 'Tap the enemies before they reach the base' }));
+      a.head(a.txt({ th: 'แตะทำลายศัตรูก่อนถึงฐาน • แตะฐาน = สายฟ้าช็อตทั้งจอ (' + d.skill + ')', en: 'Tap enemies before they reach the base • tap the base = lightning (' + d.skill + ')' }));
     }
   });
 
@@ -362,7 +482,7 @@
       var cols = a.port ? 6 : 9, rows = a.port ? 9 : 6;
       var s = Math.min((a.W - a.mn * .08) / cols, (a.H - a.mn * .22) / rows);
       a.data.LO = { cols: cols, rows: rows, s: s, ox: (a.W - cols * s) / 2, oy: a.mn * .16 };
-      a.data.cell = [];
+      a.data.cell = []; a.data.rocks = 0; a.data.found = 0;
       var loot = ['💎', '💰', '🥇', '👑', '🏺'];
       for (var i = 0; i < cols * rows; i++) {
         var t = Math.random();
@@ -378,8 +498,12 @@
       o.dug = 1;
       var cx = L.ox + (c + .5) * L.s, cy = L.oy + (r + .5) * L.s;
       a.puff(cx, cy, { n: 8, col: '#7a4a12', spread: 3.14, spd: L.s * 3, size: L.s * .1, life: .4 });   // ดินกระเด็น
-      if (o.kind === 'gem') { a.add(o.p); a.beep(1000, .12, 'triangle'); a.shake(.008, .14); a.puff(cx, cy, { n: 10, col: '#ffd23f', spread: 3.14, spd: L.s * 4, size: L.s * .08, life: .5 }); }
-      else if (o.kind === 'rock') { a.addTime(-3); a.beep(180, .2, 'square'); a.shake(.02, .26); a.flash('#ff4646', .14); }
+      if (o.kind === 'gem') { d.found++; a.add(o.p); a.beep(1000, .12, 'triangle'); a.shake(.008, .14); a.puff(cx, cy, { n: 10, col: '#ffd23f', spread: 3.14, spd: L.s * 4, size: L.s * .08, life: .5 }); }
+      else if (o.kind === 'rock') {
+        d.rocks++; a.addTime(-3); a.beep(180, .2, 'square'); a.shake(.02, .26); a.flash('#ff4646', .14);
+        /* เจอหินครบ 5 ก้อน = จบเกม สรุปจำนวนสมบัติ */
+        if (d.rocks >= 5) { a.shake(.03, .4); a.end(a.txt({ th: 'เจอหิน 5 ก้อน! หาสมบัติได้ ' + d.found + ' ชิ้น', en: '5 rocks! Found ' + d.found + ' treasures' })); }
+      }
       else { a.add(5); a.beep(500, .05); a.shake(.003, .06); }
     },
     draw: function (g, a) {
@@ -401,7 +525,8 @@
           else if (o.kind === 'rock') a.spr('rock', '\ud83c\udf30', x + s / 2, y + s / 2, s * .7);
         }
       }
-      a.head(a.txt({ th: 'แตะขุด • เจอหินเสียเวลา 3 วินาที', en: 'Tap to dig • rocks cost 3 seconds' }));
+      a.text(a.txt({ th: 'สมบัติ ' + d.found + ' ชิ้น  •  หิน ' + d.rocks + '/5', en: 'Treasure ' + d.found + '  •  Rocks ' + d.rocks + '/5' }), a.W / 2, a.H - a.mn * .035, a.mn * .036, 'rgba(255,255,255,.9)');
+      a.head(a.txt({ th: 'แตะขุด • เจอหินเสียเวลา 3 วิ • หิน 5 ก้อนจบเกม', en: 'Tap to dig • rocks cost 3 s • 5 rocks ends the game' }));
     }
   });
 
@@ -652,7 +777,7 @@
       var top = a.mn * .16;
       var lh = (a.H - top - a.mn * .08) / (lanes + 1);
       a.data.LO = { lanes: lanes, lh: lh, top: top, size: lh * .7 };
-      a.data.row = lanes; a.data.cars = []; a.data.round = 1;
+      a.data.row = lanes; a.data.cars = []; a.data.round = 1; a.data.px = a.W / 2; a.data.face = 0;
       mkLanes(a);
     },
     update: function (dt, a) {
@@ -663,7 +788,7 @@
         if (c.v < 0 && c.x < -c.w) c.x = a.W + c.w;
       });
       var py = L.top + (d.row + .5) * L.lh;
-      var px = a.W / 2;
+      var px = d.px;
       var hit = d.cars.some(function (c) {
         return c.lane === d.row && Math.abs(c.x + c.w / 2 - px) < c.w / 2 + L.size * .35;
       });
@@ -671,11 +796,17 @@
       d.hop = Math.max(0, (d.hop || 0) - dt * 5);
     },
     down: function (x, y, a) {
-      var d = a.data;
-      if (y < a.H / 2) { d.row--; a.add(5); a.beep(620, .05, 'triangle'); }
-      else d.row = Math.min(d.LO.lanes, d.row + 1);
+      var d = a.data, L = d.LO;
+      /* ทิศตามตำแหน่งที่แตะเทียบกับตัวกบ: บน=เดินหน้า ล่าง=ถอย ซ้าย/ขวา=ขยับข้าง */
+      var fy = L.top + (d.row + .5) * L.lh, dx = x - d.px, dy = y - fy;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        var step = L.size * 1.2, dir = dx > 0 ? 1 : -1;
+        d.px = Math.max(L.size * .6, Math.min(a.W - L.size * .6, d.px + dir * step));
+        d.face = dir * Math.PI / 2; a.beep(560, .05, 'triangle');
+      } else if (dy < 0) { d.row--; d.face = 0; a.add(5); a.beep(620, .05, 'triangle'); }
+      else { d.row = Math.min(L.lanes, d.row + 1); d.face = Math.PI; a.beep(480, .05, 'triangle'); }
       d.hop = 1;
-      if (d.row < 0) { a.add(50); d.round++; d.row = d.LO.lanes; mkLanes(a); a.beep(1100, .2, 'triangle'); a.flash('#ffd23f', .2); a.shake(.012, .25); }
+      if (d.row < 0) { a.add(50); d.round++; d.row = L.lanes; d.px = a.W / 2; d.face = 0; mkLanes(a); a.beep(1100, .2, 'triangle'); a.flash('#ffd23f', .2); a.shake(.012, .25); }
     },
     draw: function (g, a) {
       a.bg('#123b1f', '#2fa050');
@@ -697,8 +828,8 @@
           a.fillRR(c.x, y - L.size * .35, c.w, L.size * .7, L.size * .15, c.col);
       });
       var fy = L.top + (d.row + .5) * L.lh, hop = Math.max(0, (d.hop || 0)), hs = 1 + Math.sin(hop * Math.PI) * .18;
-      if (!a.spr('frog', null, a.W / 2, fy - hop * L.size * .3, L.size * 1.15, { sx: hs, sy: 2 - hs })) EM(g, '🐸', a.W / 2, fy, L.size);
-      a.head(a.txt({ th: 'รอบ ' + d.round + ' — แตะครึ่งบนเพื่อก้าวไปข้างหน้า', en: 'Round ' + d.round + ' — tap the top half to hop' }));
+      if (!a.spr('frog', null, d.px, fy - hop * L.size * .3, L.size * 1.15, { sx: hs, sy: 2 - hs, rot: d.face })) EM(g, '🐸', d.px, fy, L.size);
+      a.head(a.txt({ th: 'รอบ ' + d.round + ' — แตะเหนือกบ=เดินหน้า ใต้กบ=ถอย ซ้าย/ขวา=ขยับข้าง', en: 'Round ' + d.round + ' — tap above the frog to hop, below to back up, sides to step' }));
     }
   });
   function mkLanes(a) {

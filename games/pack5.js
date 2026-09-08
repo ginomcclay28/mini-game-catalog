@@ -78,12 +78,17 @@
       var Rr = Math.min(a.W * .30, a.H * .25);
       a.data.LO = { R: Rr, cx: a.W / 2, cy: a.H * .40, dart: Rr * .62, fly: a.mn * 1.7, sy: a.H - a.mn * .11 };
       a.data.rot = 0; a.data.sp = 1.4; a.data.stuck = []; a.data.fl = null;
-      a.data.round = 1; a.data.need = 4; a.data.f = FRUITS[0]; a.data.pop = 0;
+      a.data.round = 1; a.data.need = 4; a.data.f = FRUITS[0]; a.data.pop = 0; a.data.bn = [];
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
       d.rot += d.sp * dt;
       if (d.pop > 0) d.pop -= dt;
+      /* ลูกดอกที่ชนแล้วเด้งออก: ตกตามแรงโน้มถ่วง หมุนไปด้วย */
+      for (var i = d.bn.length - 1; i >= 0; i--) {
+        var b = d.bn[i]; b.vy += a.mn * 2.4 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt; b.t -= dt;
+        if (b.t <= 0 || b.y > a.H + L.dart) d.bn.splice(i, 1);
+      }
       if (!d.fl) return;
       d.fl.y -= L.fly * dt;
       /* ปลายลูกดอกแตะขอบผลไม้ */
@@ -91,13 +96,19 @@
         var ang = ((Math.PI / 2 - d.rot) % 6.2832 + 6.2832) % 6.2832;
         var clash = d.stuck.some(function (s) { return angDiff(s, ang) < .30; });
         d.fl = null;
-        if (clash) { a.beep(150, .25, 'square'); a.shake(.03, .4); a.flash('#ff4646', .26); a.loseLife(); }
+        if (clash) {
+          a.beep(150, .25, 'square'); a.shake(.02, .3); a.flash('#ff4646', .2);
+          var side = Math.random() < .5 ? -1 : 1;
+          d.bn.push({ x: L.cx, y: L.cy + L.R, vx: side * a.rnd(a.mn * .25, a.mn * .45), vy: -a.rnd(a.mn * .3, a.mn * .5), rot: -Math.PI / 2, vr: side * a.rnd(8, 14), t: 1.2 });
+          a.puff(L.cx, L.cy + L.R, { n: 6, col: '#fff', spread: 2.5, spd: L.R * 1.5, size: L.R * .04, life: .3 });
+          a.loseLife();
+        }
         else {
           d.stuck.push(ang); a.add(20); a.beep(900, .1); d.pop = .18; a.shake(.008, .14);
           a.puff(L.cx, L.cy + L.R, { n: 8, col: d.f.flesh, spread: 3.14, spd: L.R * 2, size: L.R * .06, life: .4 });
           if (d.stuck.length >= d.need) {
             a.add(50); d.round++; d.stuck = []; d.sp *= 1.16;
-            d.need = Math.min(8, d.need + 1); d.f = a.pick(FRUITS);
+            d.need = d.need + 1; d.f = a.pick(FRUITS);   /* ทุกรอบต้องปักเพิ่มอีก 1 ลูก */
             a.beep(1200, .2, 'triangle'); a.flash('#ffd23f', .2); a.shake(.014, .3);
           }
         }
@@ -129,6 +140,11 @@
       });
       g.restore();
 
+      /* ลูกดอกที่เด้งออกเพราะชนลูกเดิม */
+      d.bn.forEach(function (b) {
+        g.save(); g.translate(b.x, b.y); g.rotate(b.rot); g.globalAlpha = Math.min(1, b.t * 2);
+        drawDart(g, a, L.dart, a.C.primary, a.C.accent); g.restore(); g.globalAlpha = 1;
+      });
       /* ลูกดอกที่กำลังลอย (ปลายชี้ขึ้น) */
       if (d.fl) {
         g.save(); g.translate(L.cx, d.fl.y); g.rotate(-Math.PI / 2);
@@ -175,12 +191,23 @@
         bw: bw, bh: bw * 2.4, G: a.mn * 2.3,
         gy: a.H - a.mn * .07, sx: a.W * .17, ph: a.mn * .04, maxP: a.mn * .34
       };
-      a.data.streak = 0; a.data.msg = ''; a.data.fx = 0; a.data.aim = null;
+      a.data.streak = 0; a.data.msg = ''; a.data.fx = 0; a.data.aim = null; a.data.wait = 0; a.data.after = '';
       newPad(a); resetBottle(a);
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO, b = d.b;
       if (d.fx > 0) { d.fx -= dt; if (d.fx <= 0) d.msg = ''; }
+      /* ค้างภาพผลลัพธ์ก่อนไปต่อ: ตั้งได้ = ขวดยืนนิ่งบนแท่น, ล้ม = เห็นขวดเด้งกระเด็น */
+      if (d.wait > 0) {
+        d.wait -= dt;
+        if (b.fail) bounceStep(a, dt);
+        if (d.wait <= 0) {
+          if (d.after === 'next') { newPad(a); resetBottle(a); }
+          else if (a.lives > 0) resetBottle(a);
+          d.after = '';
+        }
+        return;
+      }
       if (!b.fly) return;
       b.vy += L.G * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vrot * dt;
       var bottom = b.y + L.bh / 2;
@@ -193,10 +220,10 @@
       if (bottom >= L.gy) { land(a, false); return; }
       if (b.x < -L.bw * 2 || b.x > a.W + L.bw * 2) land(a, false);
     },
-    down: function (x, y, a) { if (!a.data.b.fly) a.data.aim = { x: x, y: y }; },
+    down: function (x, y, a) { if (!a.data.b.fly && a.data.wait <= 0) a.data.aim = { x: x, y: y }; },
     move: function (x, y, a) { if (a.data.aim) { a.data.aim.x = x; a.data.aim.y = y; } },
     up: function (x, y, a) {
-      var d = a.data, L = d.LO; if (!d.aim || d.b.fly) { d.aim = null; return; }
+      var d = a.data, L = d.LO; if (!d.aim || d.b.fly || d.wait > 0) { d.aim = null; return; }
       var v = flipV(a); d.aim = null;
       if (!v) return;
       d.b.vx = v.vx; d.b.vy = v.vy; d.b.vrot = v.vrot; d.b.fly = 1;
@@ -257,24 +284,50 @@
   }
   function resetBottle(a) {
     var L = a.data.LO;
-    a.data.b = { x: L.sx, y: L.gy - L.ph - L.bh / 2, vx: 0, vy: 0, rot: 0, vrot: 0, fly: 0 };
+    a.data.b = { x: L.sx, y: L.gy - L.ph - L.bh / 2, vx: 0, vy: 0, rot: 0, vrot: 0, fly: 0, fail: 0 };
   }
   function land(a, onPad) {
     var d = a.data, b = d.b;
     var r = ((b.rot % 6.2832) + 6.2832 + Math.PI) % 6.2832 - Math.PI;   /* ปรับให้อยู่ช่วง -π..π */
     var upright = Math.abs(r) < .50;
-    b.fly = 0; b.vrot = 0;
+    var L = d.LO;
     if (onPad && upright) {
+      b.fly = 0; b.vrot = 0; b.vx = b.vy = 0;
+      b.rot = 0; b.x = d.pad.x; b.y = d.pad.y - L.bh / 2;      /* ยืนนิ่งบนแท่นให้ดูชัด ๆ */
       d.streak++; a.add(50 + d.streak * 10); d.ok = 1;
       d.msg = a.txt({ th: 'ตั้งได้! +' + (50 + d.streak * 10), en: 'Stuck it! +' + (50 + d.streak * 10) });
-      a.beep(1150, .25, 'triangle'); d.fx = 1.0; a.shake(.012, .22); a.flash('#ffd23f', .16);
-      a.puff(b.x, b.y + a.data.LO.bh / 2, { n: 16, col: a.C.accent, spread: 3.14, spd: a.data.LO.bw * 5, size: a.data.LO.bw * .12, life: .6 });
-      newPad(a); resetBottle(a);
+      a.beep(1150, .25, 'triangle'); d.fx = 1.4; a.shake(.012, .22); a.flash('#ffd23f', .16);
+      a.puff(b.x, b.y + L.bh / 2, { n: 16, col: a.C.accent, spread: 3.14, spd: L.bw * 5, size: L.bw * .12, life: .6 });
+      d.wait = 1.4; d.after = 'next';
     } else {
+      /* ล้ม: ให้ขวดเด้งออกจากแท่น/พื้นจริง ๆ แล้วค่อยเริ่มใหม่ */
+      b.fail = 1; b.bounces = 0;
+      b.vy = -Math.abs(b.vy) * .45; b.vx = b.vx * .5 + a.rnd(-L.bw, L.bw) * 2; b.vrot = a.rnd(4, 9) * (b.vx >= 0 ? 1 : -1);
       d.ok = 0; d.streak = 0;
       d.msg = onPad ? a.txt({ th: 'ล้ม!', en: 'Tipped over!' }) : a.txt({ th: 'ไม่ถึงแท่น', en: 'Missed the platform' });
-      a.beep(170, .3, 'square'); d.fx = 1.0; a.shake(.024, .3); a.flash('#ff4646', .18);
-      if (a.loseLife() > 0) resetBottle(a);
+      a.beep(170, .3, 'square'); d.fx = 1.4; a.shake(.016, .25); a.flash('#ff4646', .14);
+      a.loseLife();
+      d.wait = 1.5; d.after = 'reset';
+    }
+  }
+  /* ฟิสิกส์ตอนขวดล้ม: เด้งกับแท่นและพื้น หมุนช้าลง แล้วนอนราบ */
+  function bounceStep(a, dt) {
+    var d = a.data, L = d.LO, b = d.b;
+    b.vy += L.G * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vrot * dt;
+    var half = L.bh * .5, low = L.bw * .55;
+    var lying = Math.abs(Math.sin(b.rot)) > .7;                 /* นอนตะแคง = ต่ำลง */
+    var bottom = b.y + (lying ? low : half);
+    var onPad = b.x > d.pad.x - d.pad.w / 2 && b.x < d.pad.x + d.pad.w / 2 && bottom >= d.pad.y && bottom < d.pad.y + L.ph * 2 && b.vy > 0;
+    if (onPad || bottom >= L.gy) {
+      b.y = (onPad ? d.pad.y : L.gy) - (lying ? low : half);
+      b.bounces++;
+      if (Math.abs(b.vy) > a.mn * .35 && b.bounces < 4) { b.vy = -Math.abs(b.vy) * .4; b.vx *= .7; b.vrot *= .6; a.beep(220, .05, 'square'); }
+      else { b.vy = 0; b.vx *= .8; b.vrot *= .5; }
+    }
+    if (b.vy === 0 && Math.abs(b.vrot) < 3) {
+      /* พักตัว: หมุนไปหามุมนอนที่ใกล้ที่สุด */
+      var target = b.rot > 0 ? Math.PI / 2 : -Math.PI / 2;
+      b.rot += (target - b.rot) * Math.min(1, dt * 8); b.vrot = 0;
     }
   }
 
@@ -283,8 +336,11 @@
     time: 0, lives: 3,
     setup: function (a) {
       var gw = Math.min(a.W * .8, a.mn * .9);
-      /* มีภาพประตู = ตั้งความสูงตามสัดส่วนภาพจริง จะได้ไม่ต้องยืดเสาให้อ้วน */
-      a.data.LO = { gw: gw, gx: (a.W - gw) / 2, gy: a.H * .16, gh: a.hasSpr('goal') ? gw / GOAL : a.mn * .28, bx: a.W / 2, by: a.H - a.mn * .15, br: a.mn * .04, kw: gw * .22 };
+      /* มีภาพประตู = ตั้งความสูงตามสัดส่วนภาพจริง จะได้ไม่ต้องยืดเสาให้อ้วน
+         เสาประตูวางบนเส้นขอบสนามของภาพพื้นหลัง (แนวนอน 62% / แนวตั้ง 47% ของความสูงจอ) */
+      var gh = a.hasSpr('goal') ? gw / GOAL : a.mn * .28;
+      var horizon = a.hasSpr('bg') ? a.H * (a.port ? .467 : .622) : a.H * .45;
+      a.data.LO = { gw: gw, gx: (a.W - gw) / 2, gy: horizon - gh + a.mn * .012, gh: gh, bx: a.W / 2, by: a.H - a.mn * .15, br: a.mn * .04, kw: gw * .22 };
       a.data.aim = null; a.data.ball = null; a.data.kx = a.W / 2; a.data.msg = ''; a.data.fx = 0;
     },
     update: function (dt, a) {
@@ -293,9 +349,11 @@
       if (!d.ball || d.fx > 0) return;
       d.ball.x += d.ball.vx * dt; d.ball.y += d.ball.vy * dt;
       d.kx += (d.ball.tk - d.kx) * Math.min(1, dt * 6);
-      if (d.ball.y <= L.gy + L.gh) {
-        var inGoal = d.ball.x > L.gx && d.ball.x < L.gx + L.gw;
-        var saved = Math.abs(d.ball.x - d.kx) < L.kw / 2 + L.br;
+      /* ลูกวิ่งตามเส้นเล็งจนถึงจุดที่เล็งไว้ (ถ้าเล็งเลยประตูขึ้นไป จะวิ่งจนพ้นคานแล้วถือว่าออก) */
+      if (d.ball.y <= d.ball.ty) {
+        d.ball.x = d.ball.tx; d.ball.y = d.ball.ty;
+        var inGoal = d.ball.x > L.gx && d.ball.x < L.gx + L.gw && d.ball.y >= L.gy && d.ball.y <= L.gy + L.gh;
+        var saved = inGoal && Math.abs(d.ball.x - d.kx) < L.kw / 2 + L.br && d.ball.y > L.gy + L.gh * .12;
         if (inGoal && !saved) {
           a.add(50); d.msg = a.txt({ th: 'ประตู! +50', en: 'GOAL! +50' }); a.beep(1100, .25, 'triangle');
           a.shake(.016, .3); a.flash('#ffd23f', .2);
@@ -311,9 +369,11 @@
       var d = a.data, L = d.LO; if (!d.aim || d.ball) { d.aim = null; return; }
       var dx = d.aim.x - L.bx, dy = d.aim.y - L.by;
       if (dy > -a.mn * .08) { d.aim = null; return; }
-      var t = .9, sp = a.mn * 1.5;
+      var sp = a.mn * 1.5;
       var len = Math.hypot(dx, dy);
-      d.ball = { x: L.bx, y: L.by, vx: dx / len * sp, vy: dy / len * sp, tk: L.gx + L.gw * a.pick([.2, .5, .8]) };
+      /* จุดปลายทาง = จุดที่เล็ง แต่ไม่สูงกว่าคานประตู (เล็งสูงเกิน = ลูกข้ามคาน) */
+      var ty = Math.max(d.aim.y, L.gy - L.br), tx = L.bx + dx * (ty - L.by) / dy;
+      d.ball = { x: L.bx, y: L.by, vx: dx / len * sp, vy: dy / len * sp, tx: tx, ty: ty, tk: L.gx + L.gw * a.pick([.2, .5, .8]) };
       d.aim = null; a.beep(320, .1);
     },
     draw: function (g, a) {
@@ -342,7 +402,7 @@
       }
       var bx = d.ball ? d.ball.x : L.bx, by = d.ball ? d.ball.y : L.by;
       /* ลูกบอลเล็กลงตามระยะที่พุ่งไปไกล (มุมมองลึกเข้าไปหาประตู) */
-      var depth = d.ball ? 1 - .35 * (L.by - by) / (L.by - L.gy) : 1;
+      var depth = d.ball ? 1 - .35 * Math.max(0, Math.min(1, (L.by - by) / (L.by - L.gy))) : 1;
       a.spr('ball', '\u26bd', bx, by, L.br * 2.2 * depth, { rot: d.ball ? (L.by - by) * .02 : 0 });
       if (d.msg) a.text(d.msg, a.W / 2, a.H * .58, a.mn * .07, a.C.accent);
       a.head(a.txt({ th: 'ลากเล็งมุมประตูแล้วปล่อย', en: 'Drag toward a corner and release' }));
@@ -444,7 +504,9 @@
   R('slingshot', {
     time: 0,
     setup: function (a) {
-      a.data.LO = { ox: a.W * .14, oy: a.H - a.mn * .22, r: a.mn * .035, G: a.mn * 1.5, gy: a.H - a.mn * .08 };
+      /* ง่าม (oy) อยู่สูงจากพื้น .25mn ให้ภาพหนังสติ๊กสูง .26mn ตั้งบนพื้นพอดี ปลายง่ามอยู่ที่ oy */
+      var gy = a.H - a.mn * .08;
+      a.data.LO = { ox: a.W * .14, oy: gy - a.mn * .25, r: a.mn * .035, G: a.mn * 1.5, gy: gy, hs: a.mn * .26 };
       a.data.lv = 1; a.data.shots = 5; a.data.aim = null; a.data.b = null; mkCrates(a);
     },
     update: function (dt, a) {
@@ -492,16 +554,22 @@
       d.cr.forEach(function (c) {
         if (!a.sprTint('crate', c.col, null, c.x + c.s / 2, c.y + c.s / 2, c.s)) a.fillRR(c.x, c.y, c.s, c.s, c.s * .12, c.col);
       });
-      /* หนังสติ๊ก: ง่ามอยู่ที่ oy ฐานอยู่ที่ gy */
-      if (!a.spr('sling', null, L.ox, (L.oy + L.gy) / 2 + a.mn * .01, (L.gy - L.oy) * 1.2)) {
+      /* หนังสติ๊ก: ภาพสูง hs ยอดง่ามอยู่ที่ oy ฐานอยู่ที่ gy  ปลายง่ามซ้าย/ขวาวัดจากภาพ = ±.23 ของความสูง */
+      var art = a.spr('sling', null, L.ox, L.oy + L.hs * .44, L.hs);
+      var tipL = { x: L.ox - (art ? L.hs * .23 : a.mn * .04), y: L.oy + (art ? L.hs * .04 : 0) };
+      var tipR = { x: L.ox + (art ? L.hs * .23 : a.mn * .04), y: tipL.y };
+      if (!art) {
         g.strokeStyle = '#7a4a12'; g.lineWidth = a.mn * .018;
-        g.beginPath(); g.moveTo(L.ox - a.mn * .04, L.gy); g.lineTo(L.ox, L.oy);
-        g.moveTo(L.ox + a.mn * .04, L.gy); g.lineTo(L.ox, L.oy); g.stroke();
+        g.beginPath(); g.moveTo(L.ox - a.mn * .04, L.gy); g.lineTo(tipL.x, tipL.y);
+        g.moveTo(L.ox + a.mn * .04, L.gy); g.lineTo(tipR.x, tipR.y); g.stroke();
       }
-      /* ยางหนังสติ๊ก ดึงตามนิ้ว */
-      if (d.aim && !d.b) {
-        g.strokeStyle = '#5a2d0c'; g.lineWidth = a.mn * .01;
-        g.beginPath(); g.moveTo(L.ox - a.mn * .05, L.oy - a.mn * .02); g.lineTo(d.aim.x, d.aim.y); g.lineTo(L.ox + a.mn * .05, L.oy - a.mn * .02); g.stroke();
+      /* ยางหนังสติ๊ก: จากปลายง่ามทั้งสองไปที่ก้อนหิน (ดึงตามนิ้ว) */
+      if (!d.b) {
+        var px = d.aim ? d.aim.x : L.ox, py = d.aim ? d.aim.y : L.oy + a.mn * .01;
+        g.strokeStyle = '#5a2d0c'; g.lineWidth = a.mn * .012; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(tipL.x, tipL.y); g.lineTo(px, py); g.lineTo(tipR.x, tipR.y); g.stroke();
+        /* ถุงหนังรองก้อนหิน */
+        a.fillRR(px - L.r * 1.1, py - L.r * .5, L.r * 2.2, L.r * 1.0, L.r * .4, '#4a2408');
       }
       if (d.aim) {
         var dx = L.ox - d.aim.x, dy = L.oy - d.aim.y, len = Math.hypot(dx, dy);
@@ -512,7 +580,7 @@
           g.beginPath(); g.arc(L.ox + vx * t, L.oy + vy * t + L.G * .5 * t * t, a.mn * .008, 0, 6.29); g.fill();
         }
       }
-      var bx = d.b ? d.b.x : (d.aim ? d.aim.x : L.ox), by = d.b ? d.b.y : (d.aim ? d.aim.y : L.oy);
+      var bx = d.b ? d.b.x : (d.aim ? d.aim.x : L.ox), by = d.b ? d.b.y : (d.aim ? d.aim.y : L.oy + a.mn * .01);
       if (!a.spr('stone', null, bx, by, L.r * 2.3, { rot: d.b ? d.b.x * .03 : 0 })) a.circle(bx, by, L.r, a.C.accent);
       a.head(a.txt({ th: 'ด่าน ' + d.lv + ' • เหลือ ' + d.shots + ' นัด', en: 'Level ' + d.lv + ' • ' + d.shots + ' shots left' }));
     }
@@ -677,66 +745,169 @@
   });
 
   /* ---------- 48 ตู้คีบตุ๊กตา ---------- */
+  /* ขั้นตอน: move (เลื่อนซ้ายขวา แตะ=หย่อน) -> down (สายแกว่งสุ่ม) -> up -> carry (พาไปปล่อง)
+     -> lower (หย่อนลง 25% ของจอ สายแกว่ง) -> release (แตะปล่อย / ปล่อยเองใน 2.5 วิ) -> drop (ตุ๊กตาตก) */
   R('cranegrab', {
     time: 0,
     setup: function (a) {
-      a.data.LO = { top: a.mn * .16, floor: a.H - a.mn * .12, cw: a.mn * .09 };
-      a.data.cx = a.W * .2; a.data.dir = 1; a.data.st = 'move'; a.data.cy = a.data.LO.top;
-      a.data.tries = 5; a.data.hold = null; a.data.msg = '';
-      a.data.items = [];
+      var ds = a.mn * .21, cw = a.mn * .09 * 1.75;
+      a.data.LO = { top: a.mn * .16, floor: a.H - a.mn * .12, cw: cw, ds: ds, chuteX: a.W * .13, chuteW: a.mn * .2, lowY: a.mn * .16 + a.H * .25, G: a.mn * 2.2 };
+      var d = a.data;
+      d.cx = a.W * .5; d.dir = 1; d.st = 'move'; d.cy = d.LO.top; d.th = 0;
+      d.swA = 0; d.swW = 0; d.swP = 0; d.swT = 0;
+      d.tries = 6; d.hold = null; d.msg = ''; d.wait = 0; d.drop = null; d.score = 0;
       var e = [{ k: 'p1', e: '🧸' }, { k: 'p2', e: '🐰' }, { k: 'p3', e: '🐤' }, { k: 'p4', e: '🐼' }, { k: 'p5', e: '🤖' }, { k: 'p6', e: '🦖' }];
-      for (var i = 0; i < 6; i++)
-        a.data.items.push({ x: a.W * (.14 + i * .145), y: a.data.LO.floor - a.mn * .05, e: e[i], got: 0 });
+      d.items = [];
+      for (var i = 0; i < 14; i++) {
+        var layer = i < 9 ? 0 : 1;
+        d.items.push({ x: a.rnd(a.W * .30, a.W * .90), y: d.LO.floor - ds * (layer ? .95 : .42), e: e[i % 6], got: 0, rot: a.rnd(-.45, .45), layer: layer, vx: 0, vy: 0, chute: 0 });
+      }
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
-      if (d.st === 'move') { d.cx += d.dir * a.mn * .42 * dt; if (d.cx > a.W * .88) d.dir = -1; if (d.cx < a.W * .12) d.dir = 1; }
-      else if (d.st === 'down') {
+      if (d.wait > 0) d.wait -= dt;
+      if (d.st === 'move') {
+        d.cx += d.dir * a.mn * .42 * dt; if (d.cx > a.W * .92) d.dir = -1; if (d.cx < a.W * .28) d.dir = 1;
+        d.th *= Math.pow(.05, dt);
+      } else if (d.st === 'down') {
+        d.swT += dt; d.th = d.swA * Math.sin(d.swW * d.swT + d.swP);
         d.cy += a.mn * .5 * dt;
-        if (d.cy >= L.floor - a.mn * .07) {
+        if (d.cy >= L.floor - L.cw * .55) {
           d.st = 'up';
-          var best = null, bd = 1e9;
-          d.items.forEach(function (o) { if (o.got) return; var dd = Math.abs(o.x - d.cx); if (dd < bd) { bd = dd; best = o; } });
-          if (best && bd < L.cw * .8 && Math.random() < .75) {
-            d.hold = best; best.got = 1; a.beep(1000, .2, 'triangle'); d.msg = a.txt({ th: 'คีบติด!', en: 'Got it!' }); a.shake(.008, .14);
-            a.puff(d.cx, d.cy + L.cw, { n: 10, col: a.C.accent, spread: 3.14, spd: L.cw * 3, size: L.cw * .08, life: .5 });
+          var t = craneTip(a), best = null, bd = 1e9;
+          d.items.forEach(function (o) {
+            if (o.got) return;
+            var dd = Math.hypot(o.x - t.x, o.y - t.y) - (o.layer ? L.ds * .15 : 0);   /* ชั้นบนหยิบง่ายกว่า */
+            if (dd < bd) { bd = dd; best = o; }
+          });
+          var deg = Math.abs(d.th) * 180 / Math.PI;
+          var able = deg <= 30 ? true : (deg <= 90 ? Math.random() < .5 : false);
+          if (best && bd < L.ds * .6 && able) {
+            d.hold = best; best.got = 1; best.rot = 0; a.beep(1000, .2, 'triangle'); d.msg = a.txt({ th: 'คีบติด!', en: 'Got it!' }); a.shake(.008, .14);
+            a.puff(t.x, t.y, { n: 10, col: a.C.accent, spread: 3.14, spd: L.cw * 3, size: L.cw * .08, life: .5 });
+          } else {
+            a.beep(200, .2, 'square'); a.shake(.012, .2);
+            d.msg = (best && bd < L.ds * .6) ? a.txt({ th: 'ขาคีบเอียง หลุดมือ', en: 'Claw tilted — slipped' }) : a.txt({ th: 'พลาด', en: 'Missed' });
           }
-          else { a.beep(200, .2, 'square'); d.msg = a.txt({ th: 'พลาด', en: 'Missed' }); d.tries--; a.shake(.016, .22); }
         }
       } else if (d.st === 'up') {
-        d.cy -= a.mn * .5 * dt;
-        if (d.hold) { d.hold.x = d.cx; d.hold.y = d.cy + a.mn * .07; }
+        d.cy -= a.mn * .5 * dt; d.th *= Math.pow(.08, dt);
         if (d.cy <= L.top) {
           d.cy = L.top;
-          if (d.hold) { a.add(50); d.hold = null; a.flash('#ffd23f', .16); }
-          d.st = 'move';
-          if (d.tries <= 0 || d.items.every(function (o) { return o.got; }))
-            a.end(a.txt({ th: 'จบเกม', en: 'Game over' }));
+          if (d.hold) d.st = 'carry';
+          else { d.st = 'move'; craneEnd(a); }
         }
+      } else if (d.st === 'carry') {
+        var dx = L.chuteX - d.cx, step = a.mn * .42 * dt;
+        d.th *= Math.pow(.08, dt);
+        if (Math.abs(dx) <= step) { d.cx = L.chuteX; d.st = 'lower'; newSwing(a, .25, 1.0); }
+        else d.cx += Math.sign(dx) * step;
+      } else if (d.st === 'lower') {
+        d.swT += dt; d.th = d.swA * Math.sin(d.swW * d.swT + d.swP);
+        d.cy += a.mn * .4 * dt;
+        if (d.cy >= L.lowY) { d.cy = L.lowY; d.st = 'release'; d.wait = 2.5; d.msg = ''; }
+      } else if (d.st === 'release') {
+        d.swT += dt; d.th = d.swA * Math.sin(d.swW * d.swT + d.swP);
+        if (d.wait <= 0) craneRelease(a);
+      } else if (d.st === 'drop') {
+        d.cy = Math.max(L.top, d.cy - a.mn * .5 * dt); d.th *= Math.pow(.08, dt);
+        var o = d.drop;
+        o.vy += L.G * dt; o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.vr * dt;
+        var restY = L.floor - L.ds * .42;
+        if (o.chute) {
+          if (o.y > L.floor + L.ds) { d.drop = null; d.st = 'move'; craneEnd(a); }
+        } else if (o.y >= restY && o.vy > 0) {
+          if (Math.abs(o.x - L.chuteX) < L.chuteW / 2 - L.ds * .15) {
+            o.chute = 1; a.add(50); d.score++; d.msg = a.txt({ th: 'ลงปล่อง! +50', en: 'In the chute! +50' });
+            a.beep(1200, .25, 'triangle'); a.flash('#ffd23f', .16);
+            a.puff(o.x, restY, { n: 14, col: a.C.accent, spread: 3.14, spd: L.ds * 2.5, size: L.ds * .05, life: .5 });
+          } else {
+            /* ตกไม่ลงปล่อง เด้งกลับไปกองในตู้ */
+            o.y = restY;
+            if (Math.abs(o.vy) > a.mn * .3 && !o.bounced) { o.bounced = 1; o.vy = -Math.abs(o.vy) * .4; o.vx = (o.x < L.chuteX ? 1 : 1) * a.rnd(a.mn * .25, a.mn * .45); o.vr = a.rnd(-4, 4); a.beep(220, .08, 'square'); a.shake(.008, .12); }
+            else {
+              o.vy = 0; o.vx = 0; o.vr = 0; o.got = 0; o.layer = 0; o.x = Math.max(a.W * .30, Math.min(a.W * .90, o.x)); o.rot = a.rnd(-.4, .4);
+              d.msg = a.txt({ th: 'เด้งออก ไม่ลงปล่อง', en: 'Bounced out' }); d.drop = null; d.st = 'move'; craneEnd(a);
+            }
+          }
+        }
+        if (o.x < a.W * .04) { o.x = a.W * .04; o.vx = Math.abs(o.vx); }
       }
     },
-    down: function (x, y, a) { if (a.data.st === 'move') { a.data.st = 'down'; a.beep(400, .07); } },
+    down: function (x, y, a) {
+      var d = a.data;
+      if (d.st === 'move') { d.st = 'down'; d.tries--; d.msg = ''; newSwing(a, .15, 1.1); a.beep(400, .07); }
+      else if (d.st === 'release') craneRelease(a);
+    },
     draw: function (g, a) {
       a.bg('#5b1064', '#ff2e88');
       var d = a.data, L = d.LO;
       a.fillRR(a.mn * .04, L.top - a.mn * .05, a.W - a.mn * .08, L.floor - L.top + a.mn * .1, a.mn * .03, 'rgba(255,255,255,.10)');
       g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(a.mn * .04, L.floor, a.W - a.mn * .08, a.H - L.floor - a.mn * .02);
-      d.items.forEach(function (o) {
-        if (!o.got || d.hold === o) a.spr(o.e.k, o.e.e, o.x, o.y, a.mn * .12, { rot: d.hold === o ? Math.sin(a.now * 6) * .1 : 0 });
+      /* ปล่องปล่อยตุ๊กตา ด้านซ้าย */
+      var cx0 = L.chuteX - L.chuteW / 2, cy0 = L.floor - a.mn * .03;
+      a.fillRR(cx0 - a.mn * .012, cy0 - a.mn * .012, L.chuteW + a.mn * .024, a.mn * .1, a.mn * .015, a.C.accent);
+      a.fillRR(cx0, cy0, L.chuteW, a.mn * .09, a.mn * .012, '#160a24');
+      g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = Math.max(1, a.mn * .004); g.setLineDash([a.mn * .015, a.mn * .015]);
+      g.beginPath(); g.moveTo(L.chuteX, L.top + a.mn * .02); g.lineTo(L.chuteX, cy0 - a.mn * .02); g.stroke(); g.setLineDash([]);
+      a.text(a.txt({ th: 'ปล่อง', en: 'CHUTE' }), L.chuteX, cy0 - a.mn * .035, a.mn * .034, a.C.accent);
+      /* ตุ๊กตาในกอง: ชั้นล่างก่อน ชั้นบนทับ */
+      [0, 1].forEach(function (ly) {
+        d.items.forEach(function (o) {
+          if (o.got || o.layer !== ly) return;
+          a.spr(o.e.k, o.e.e, o.x, o.y, L.ds, { rot: o.rot });
+        });
       });
+      /* สายเคเบิล + ขาคีบ แกว่งตามมุม */
+      var t = craneTip(a);
       g.strokeStyle = '#ddd'; g.lineWidth = a.mn * .008;
-      g.beginPath(); g.moveTo(d.cx, L.top - a.mn * .05); g.lineTo(d.cx, d.cy); g.stroke();
-      /* ก้ามคีบ: หุบตอนคีบติด (sx เล็กลง) */
+      g.beginPath(); g.moveTo(d.cx, L.top - a.mn * .05); g.lineTo(d.cx, L.top); g.lineTo(t.x, t.y); g.stroke();
+      var dirx = Math.sin(d.th), diry = Math.cos(d.th);
+      if (d.hold) a.spr(d.hold.e.k, d.hold.e.e, t.x + dirx * L.cw * .95, t.y + diry * L.cw * .95, L.ds, { rot: -d.th + Math.sin(a.now * 6) * .06 });
       var open = d.hold ? .7 : 1;
-      if (!a.spr('claw', null, d.cx, d.cy + L.cw * .35, L.cw * 1.4, { sx: open })) {
+      if (!a.spr('claw', null, t.x + dirx * L.cw * .35, t.y + diry * L.cw * .35, L.cw * 1.4, { sx: open, rot: -d.th })) {
+        g.save(); g.translate(t.x, t.y); g.rotate(-d.th);
         g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .014;
-        g.beginPath(); g.moveTo(d.cx - L.cw / 2, d.cy + L.cw * .6); g.lineTo(d.cx, d.cy); g.lineTo(d.cx + L.cw / 2, d.cy + L.cw * .6); g.stroke();
+        g.beginPath(); g.moveTo(-L.cw / 2, L.cw * .6); g.lineTo(0, 0); g.lineTo(L.cw / 2, L.cw * .6); g.stroke(); g.restore();
       }
-      a.text(a.txt({ th: 'เหลือ ' + Math.max(0, d.tries) + ' สิทธิ์  ' + d.msg, en: Math.max(0, d.tries) + ' tries left  ' + d.msg }),
-        a.W / 2, a.H - a.mn * .05, a.mn * .04, '#fff');
-      a.head(a.txt({ th: 'แตะเพื่อหยุดและคีบ', en: 'Tap to stop and grab' }));
+      /* ตุ๊กตาที่กำลังตกลงปล่อง */
+      if (d.drop) {
+        g.save(); if (d.drop.chute) { a.rr(cx0, cy0, L.chuteW, a.mn * .09, 0); g.clip(); }
+        a.spr(d.drop.e.k, d.drop.e.e, d.drop.x, d.drop.y, L.ds, { rot: d.drop.rot }); g.restore();
+      }
+      /* มุมเอียงของขาคีบ */
+      if (d.st === 'down' || d.st === 'release' || d.st === 'lower') {
+        var deg = Math.round(Math.abs(d.th) * 180 / Math.PI);
+        a.text(deg + '°', t.x + (d.th >= 0 ? 1 : -1) * L.cw * 1.1, t.y, a.mn * .034, deg <= 30 ? a.C.good : (deg <= 90 ? a.C.accent : a.C.bad));
+      }
+      a.text(a.txt({ th: 'เหลือ ' + Math.max(0, d.tries) + ' สิทธิ์ • ได้ ' + d.score + ' ตัว  ' + d.msg, en: Math.max(0, d.tries) + ' tries • ' + d.score + ' won  ' + d.msg }),
+        a.W / 2, a.H - a.mn * .05, a.mn * .038, '#fff');
+      a.head(d.st === 'move' ? a.txt({ th: 'แตะเพื่อหยุดและคีบ • เอียงไม่เกิน 30° ถึงคีบติดชัวร์', en: 'Tap to stop and grab • under 30° tilt is a sure grip' })
+        : d.st === 'release' ? a.txt({ th: 'แตะปล่อยตอนขาคีบตรงกับปล่อง!', en: 'Tap to release when it hangs over the chute!' })
+          : a.txt({ th: 'กำลังทำงาน…', en: 'Working…' }));
     }
   });
+  /* ปลายสาย (จุดแขวนขาคีบ) หลังหมุนตามมุมแกว่ง */
+  function craneTip(a) {
+    var d = a.data, L = d.LO, len = d.cy - L.top;
+    return { x: d.cx + Math.sin(d.th) * len, y: L.top + Math.cos(d.th) * len };
+  }
+  function newSwing(a, lo, hi) {
+    var d = a.data;
+    d.swA = a.rnd(lo, hi); d.swW = a.rnd(2.5, 4.5); d.swP = a.rnd(0, 6.28); d.swT = 0;
+  }
+  function craneRelease(a) {
+    var d = a.data, L = d.LO, t = craneTip(a), o = d.hold; if (!o) return;
+    var len = d.cy - L.top, thv = d.swA * d.swW * Math.cos(d.swW * d.swT + d.swP);   /* ความเร็วเชิงมุม -> ความเร็วปลายสาย */
+    o.x = t.x + Math.sin(d.th) * L.cw * .95; o.y = t.y + Math.cos(d.th) * L.cw * .95;
+    o.vx = Math.cos(d.th) * thv * len; o.vy = Math.max(0, Math.sin(d.th) * thv * len); o.vr = -thv * .8; o.rot = -d.th; o.bounced = 0; o.chute = 0;
+    d.hold = null; d.drop = o; d.st = 'drop'; d.msg = ''; a.beep(500, .06);
+  }
+  function craneEnd(a) {
+    var d = a.data;
+    if (d.tries <= 0 || d.items.every(function (o) { return o.got; }))
+      a.end(a.txt({ th: 'ได้ตุ๊กตา ' + d.score + ' ตัว', en: 'Won ' + d.score + ' prizes' }));
+  }
 
   /* ---------- 49 โยนห่วง ---------- */
   R('ringtoss', {
@@ -787,8 +958,15 @@
           a.fillRR(p.x - a.mn * .012, p.y - a.mn * .09, a.mn * .024, a.mn * .09, a.mn * .01, '#c9a227');
           a.circle(p.x, p.y, a.mn * .022, '#8a6a12');
         }
-        if (p.on && !a.spr('ring', null, p.x, p.y - a.mn * .012, a.mn * .1 / RING)) {
-          g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .012; g.beginPath(); g.ellipse(p.x, p.y - a.mn * .01, a.mn * .045, a.mn * .018, 0, 0, 6.29); g.stroke();
+        /* ห่วงที่คล้องแล้ว: วางบนกองห่วงที่วาดไว้ในภาพเสา แล้ววาดเสาทับครึ่งบนอีกที ให้เสาลอดรูห่วง */
+        if (p.on) {
+          var ry = p.y - a.mn * .052;
+          if (a.spr('ring', null, p.x, ry, a.mn * .1 / RING)) {
+            g.save(); g.beginPath(); g.rect(p.x - a.mn * .04, p.y - a.mn * .16, a.mn * .08, ry - (p.y - a.mn * .16)); g.clip();
+            a.spr('peg', null, p.x, p.y - a.mn * .065, a.mn * .15); g.restore();
+          } else {
+            g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .012; g.beginPath(); g.ellipse(p.x, p.y - a.mn * .01, a.mn * .045, a.mn * .018, 0, 0, 6.29); g.stroke();
+          }
         }
         a.text(p.p + '', p.x, p.y + a.mn * .05, a.mn * .032, 'rgba(255,255,255,.8)');
       });
@@ -813,32 +991,44 @@
     lives: 3,
     setup: function (a) {
       var Rr = Math.min(a.W * .28, a.H * .24);
-      a.data.LO = { R: Rr, cx: a.W / 2, cy: a.H * .34, fly: a.mn * 1.5, sy: a.H - a.mn * .14 };
-      a.data.ax = null; a.data.rot = 0; a.data.stuck = []; a.data.wob = 0;
+      a.data.LO = { R: Rr, cx: a.W / 2, cy: a.H * .34, fly: a.mn * 1.5, sy: a.H - a.mn * .14, as: Rr * .92 };   /* as = ขนาดขวาน (2 เท่าของเดิม) */
+      a.data.ax = null; a.data.rot = 0; a.data.stuck = []; a.data.wob = 0; a.data.bn = []; a.data.msg = ''; a.data.fx = 0;
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
       d.wob += dt * 2.2;
       d.rot += dt * 9;
+      if (d.fx > 0) { d.fx -= dt; if (d.fx <= 0) d.msg = ''; }
+      /* ขวานที่เด้งออก (ด้ามกระแทก/พลาดเป้า) ตกลงมา */
+      for (var i = d.bn.length - 1; i >= 0; i--) {
+        var b = d.bn[i]; b.vy += a.mn * 2.4 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt; b.t -= dt;
+        if (b.t <= 0 || b.y > a.H + L.as) d.bn.splice(i, 1);
+      }
       if (!d.ax) return;
       d.ax.y -= L.fly * dt; d.ax.rot += dt * 16;
       if (d.ax.y <= L.cy) {
-        var off = Math.abs(d.ax.x - L.cx) + Math.abs(d.ax.y - L.cy);
-        var dist = Math.hypot(d.ax.x - L.cx, L.cy - L.cy);
-        dist = Math.abs(d.ax.x - L.cx);
+        var dist = Math.abs(d.ax.x - L.cx);
         var p = dist < L.R * .18 ? 50 : (dist < L.R * .5 ? 20 : (dist < L.R ? 10 : 0));
-        if (p) {
-          a.add(p); d.stuck.push({ x: d.ax.x, y: L.cy + a.rnd(-L.R * .2, L.R * .2) }); a.beep(p === 50 ? 1200 : 800, .14);
+        /* ใบขวานชี้ไปทาง +X ของภาพ ขวานพุ่งขึ้น -> ต้องหันใบขึ้น (มุม -90°) ไม่เกิน ±60° ถึงจะปัก */
+        var bladeOff = angDiff(d.ax.rot, -Math.PI / 2);
+        if (p && bladeOff < Math.PI / 3) {
+          a.add(p); d.stuck.push({ x: d.ax.x, y: L.cy + a.rnd(-L.R * .15, L.R * .15), rot: d.ax.rot }); a.beep(p === 50 ? 1200 : 800, .14);
           a.shake(p === 50 ? .02 : .01, .22); if (p === 50) a.flash('#ffd23f', .16);
+          d.msg = '+' + p; d.fx = .8;
           a.puff(d.ax.x, L.cy, { n: 10, col: '#d9b98a', spread: 3.14, spd: L.R * 2, size: L.R * .05, life: .5 });
+        } else {
+          var side = d.ax.x < L.cx ? -1 : 1;
+          d.bn.push({ x: d.ax.x, y: L.cy, vx: side * a.rnd(a.mn * .3, a.mn * .5), vy: -a.rnd(a.mn * .35, a.mn * .55), rot: d.ax.rot, vr: side * a.rnd(6, 12), t: 1.3 });
+          if (p) { a.beep(240, .18, 'square'); a.shake(.012, .2); d.msg = a.txt({ th: 'ด้ามกระแทก! ไม่ปัก', en: 'Handle hit — no stick' }); d.fx = 1.0; }
+          else { a.beep(150, .25, 'square'); a.shake(.02, .3); a.flash('#ff4646', .2); d.msg = a.txt({ th: 'พลาดเป้า', en: 'Missed' }); d.fx = 1.0; a.loseLife(); }
         }
-        else { a.beep(150, .25, 'square'); a.shake(.03, .4); a.flash('#ff4646', .26); a.loseLife(); }
         d.ax = null;
       }
     },
     down: function (x, y, a) {
       var d = a.data, L = d.LO;
-      if (!d.ax) { d.ax = { x: L.cx + Math.sin(d.wob) * L.R * 1.1, y: L.sy, rot: 0 }; a.beep(400, .06); }
+      /* ปาด้วยมุมที่ขวานกำลังหมุนอยู่ตอนนี้ -> จับจังหวะให้ใบขวานถึงเป้าก่อนด้าม */
+      if (!d.ax) { d.ax = { x: L.cx + Math.sin(d.wob) * L.R * 1.1, y: L.sy, rot: d.rot }; a.beep(400, .06); }
     },
     draw: function (g, a) {
       a.bg('#2b1a0e', '#7a4a12');
@@ -855,16 +1045,20 @@
         for (var k = 0; k < 4; k++) a.circle(L.cx, L.cy, L.R * rad[k], cols[k]);
       }
       d.stuck.forEach(function (s) {
-        g.save(); g.translate(s.x, s.y); g.rotate(-Math.PI * .35); drawAxe(g, a, L.R * .46); g.restore();
+        g.save(); g.translate(s.x, s.y); g.rotate(s.rot); drawAxe(g, a, L.as); g.restore();   /* ท่าปักตามมุมที่โดนจริง */
       });
-      if (d.ax) { g.save(); g.translate(d.ax.x, d.ax.y); g.rotate(d.ax.rot); drawAxe(g, a, L.R * .46); g.restore(); }
+      d.bn.forEach(function (b) {
+        g.save(); g.translate(b.x, b.y); g.rotate(b.rot); g.globalAlpha = Math.min(1, b.t * 2); drawAxe(g, a, L.as); g.restore(); g.globalAlpha = 1;
+      });
+      if (d.ax) { g.save(); g.translate(d.ax.x, d.ax.y); g.rotate(d.ax.rot); drawAxe(g, a, L.as); g.restore(); }
       else {
         var sx = L.cx + Math.sin(d.wob) * L.R * 1.1;
-        g.save(); g.translate(sx, L.sy); g.rotate(d.rot); drawAxe(g, a, L.R * .46); g.restore();
+        g.save(); g.translate(sx, L.sy); g.rotate(d.rot); drawAxe(g, a, L.as); g.restore();
         g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2; g.setLineDash([6, 8]);
         g.beginPath(); g.moveTo(sx, L.sy); g.lineTo(sx, L.cy); g.stroke(); g.setLineDash([]);
       }
-      a.head(a.txt({ th: 'แตะปาให้ตรงกลางเป้า', en: 'Tap to throw at the bullseye' }));
+      if (d.msg) a.text(d.msg, a.W / 2, L.cy + L.R * 1.35, a.mn * .05, a.C.accent);
+      a.head(a.txt({ th: 'แตะปาให้ตรงกลางเป้า • จับจังหวะให้ใบขวานหันขึ้น', en: 'Tap to throw at the bullseye • time it so the blade leads' }));
     }
   });
 })();
