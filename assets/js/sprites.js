@@ -478,6 +478,78 @@ window.GAME_SPRITES = {
   sequence: {
     dot: 'dot.png',   // จุดกลม ขาว/เทา เกมย้อมสี
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 61 Tetris ---------- */
+  tetris: {
+    block: 'block.png',   // บล็อกจัตุรัส ขาว/เทา เกมย้อม 7 สี
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 62 บอลตกหอ ---------- */
+  towerdrop: {
+    ball: 'ball.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 63 กระโดดขึ้นแท่น ---------- */
+  platformjump: {
+    hero:     'hero.png',       // ตัวละคร หันซ้าย (เกมพลิกเอง)
+    platform: 'platform.png',   // แท่นหญ้า ยาว ขอบบนคือเส้นเหยียบ
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 64 ยิงยานอวกาศ ---------- */
+  spacewar: {
+    ship:  'ship.png',    // ยานผู้เล่น หัวชี้ขึ้น
+    enemy: 'enemy.png',   // ยานศัตรู หัวชี้ลง
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 65 ป้องกันฐาน ---------- */
+  defendbase: {
+    base: 'base.png',   // ป้อมกลางจอ  ใส่โลโก้ลูกค้าได้
+    e1: 'e1.png', e2: 'e2.png',   // ศัตรู 2 แบบ หัวชี้ขึ้น (เกมหมุนให้หันเข้าฐาน)
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 66 ขุดหาสมบัติ ---------- */
+  digger: {
+    dirt: 'dirt.png',   // ช่องดินยังไม่ขุด
+    gem:  'gem.png',    // เพชร (รางวัลใหญ่)
+    coin: 'coin.png',   // เหรียญ (รางวัลเล็ก)
+    rock: 'rock.png',   // ก้อนหิน เสียเวลา
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 67 พินบอล ---------- */
+  pinball: {
+    ball:   'ball.png',     // ลูกเหล็ก
+    bumper: 'bumper.png',   // หมุดชนกลม
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 68 ข้ามถนน ---------- */
+  froggy: {
+    frog:  'frog.png',
+    car:   'car.png',     // รถเก๋ง มองจากบน หันขวา
+    truck: 'truck.png',   // รถบรรทุก มองจากบน หันขวา
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 69 ปีนหน้าผา ---------- */
+  climbup: {
+    climber: 'climber.png',   // นักปีน เกาะผนังซ้าย (หันซ้าย)
+    rock:    'rock.png',      // ก้อนหินยื่นออกจากผนัง
+    bird:    'bird.png',      // นก
+    wall:    'wall.png',      // แถบผนังหิน เรียงต่อกันแนวตั้งได้
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 70 ทาสีให้เต็ม ---------- */
+  paintfill: {
+    roller: 'roller.png',   // ลูกกลิ้งทาสี ตามนิ้ว
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   }
 
 };
