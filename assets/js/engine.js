@@ -127,7 +127,7 @@ window.MiniGame = (function () {
       setLives: function (n) { a.lives = n; $('#sLife').classList.remove('hide'); syncHud(); },
       loseLife: function () { a.lives--; syncHud(); if (a.lives <= 0) a.end(); return a.lives; },
       addTime: function (s) { a.timeLeft += s; syncHud(); },
-      end: function (title) { stop(title); },
+      end: function (title, score) { stop(title, score); },   /* score = ข้อความคะแนนที่จะโชว์ใหญ่ เช่น '12 : 8' ของเกม 2 คน */
 
       rnd: function (mn, mx) { return mn + Math.random() * (mx - mn); },
       rndi: function (mn, mx) { return Math.floor(mn + Math.random() * (mx - mn + 1)); },
@@ -193,6 +193,7 @@ window.MiniGame = (function () {
         g.translate(x, y);
         if (opt.rot) g.rotate(opt.rot);
         if (opt.sx || opt.sy) g.scale(opt.sx || 1, opt.sy || 1);   // ยืด/ยุบ
+        if (opt.flip) g.scale(-1, 1);
         g.drawImage(c, -w / 2, -h / 2, w, h);
         g.restore();
         return true;
@@ -349,7 +350,12 @@ window.MiniGame = (function () {
     api.now += dt;
     if (api.timeLeft > 0) {
       api.timeLeft -= dt; syncHud();
-      if (api.timeLeft <= 0) { api.timeLeft = 0; stop(); return; }
+      if (api.timeLeft <= 0) {
+        api.timeLeft = 0;
+        if (def.timeout) def.timeout(api);   /* เกมจัดการเอง เช่นเกม 2 คนประกาศผู้ชนะ */
+        if (running) stop();
+        return;
+      }
     }
     if (def.update) def.update(dt, api);
     stepFx(dt);
@@ -387,7 +393,7 @@ window.MiniGame = (function () {
     cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
   }
 
-  function stop(title) {
+  function stop(title, score) {
     if (!running) return;
     running = false; cancelAnimationFrame(raf);
     var u = UI[lang];
@@ -395,7 +401,11 @@ window.MiniGame = (function () {
     $('#ovTitle').textContent = title || u.over;
     $('#ovDesc').textContent = '';
     $('#howlist').innerHTML = '';
-    if (def.noScore) $('#ovScore').classList.add('hide');
+    if (score !== undefined) {                 /* คะแนนที่เกมส่งมาเอง (เกม 2 คน: P1 : P2) */
+      $('#ovScore').classList.remove('hide');
+      $('#ovScoreLbl').textContent = 'P1  :  P2';
+      $('#ovScore b').textContent = score;
+    } else if (def.noScore) $('#ovScore').classList.add('hide');
     else {
       $('#ovScore').classList.remove('hide');
       $('#ovScoreLbl').textContent = u.yourScore;

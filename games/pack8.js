@@ -33,7 +33,7 @@
   }
 
   /* ---------- 71 เกมสามถ้วย ---------- */
-  var CUPCOL = ['#ff7a45', '#ffd23f', '#9b5de5'];   // สีถ้วย 3 ใบ ตามภาพปก
+  var CUPCOL = ['#ff7a45', '#ffd23f', '#9b5de5'];   // สีถ้วย เปลี่ยนทุกรอบ แต่ทั้ง 3 ใบสีเดียวกัน (ไม่งั้นแยกออก)
   R('shellgame', {
     time: 0,
     setup: function (a) {
@@ -93,7 +93,7 @@
         /* ถ้วย 3 สีตามภาพปก ย้อมจากภาพขาว  ตอนสลับให้เอียงตามทิศที่วิ่ง */
         var tilt = 0;
         if (d.pair && d.anim > 0 && d.pair.indexOf(slot) >= 0) tilt = Math.sin((1 - d.anim / (d.animDur || .38)) * Math.PI) * .18 * (d.pair[0] === slot ? 1 : -1);
-        if (!a.sprTint('cup', CUPCOL[s], null, cx, L.cy - lift, L.cw * 1.1, { rot: tilt })) {
+        if (!a.sprTint('cup', CUPCOL[(d.round - 1) % 3], null, cx, L.cy - lift, L.cw * 1.1, { rot: tilt })) {
           g.fillStyle = a.C.accent;
           g.beginPath();
           g.moveTo(cx - L.cw * .5, L.cy + L.cw * .5 - lift);
@@ -259,8 +259,9 @@
         if (d.fb > 0) { if (i === d.ans) col = a.C.good; else if (d.pick === i) col = a.C.bad; }
         a.fillRR(b.x, b.y, b.w, b.h, a.mn * .026, col);
         /* เงา = ภาพเดียวกันย้อมดำ (multiply กับสีดำ = ดำทั้งตัว เหลือแค่รูปทรง) */
-        if (art) a.sprTint(d.kinds[i], '#0d0a1e', null, b.x + b.w / 2, b.y + b.h / 2, Math.min(b.w, b.h) * .68);
-        else shape(g, d.kinds[i], b.x + b.w / 2, b.y + b.h / 2, Math.min(b.w, b.h) * .32, '#0d0a1e');
+        /* เงาหมุน/กลับด้านสุ่ม ให้ต้องคิดมากขึ้น */
+        if (art) a.sprTint(d.kinds[i], '#0d0a1e', null, b.x + b.w / 2, b.y + b.h / 2, Math.min(b.w, b.h) * .68, { rot: d.rot[i], flip: d.flip[i] });
+        else { g.save(); g.translate(b.x + b.w / 2, b.y + b.h / 2); g.rotate(d.rot[i]); if (d.flip[i]) g.scale(-1, 1); shape(g, d.kinds[i], 0, 0, Math.min(b.w, b.h) * .32, '#0d0a1e'); g.restore(); }
       }
       a.head(a.txt({ th: 'เลือกเงาที่ตรงกับรูปด้านบน', en: 'Pick the silhouette that matches' }));
     }
@@ -276,6 +277,8 @@
     var d = a.data;
     d.kinds = a.shuffle((a.hasSpr('i1') ? ['i1', 'i2', 'i3', 'i4', 'i5', 'i6'] : KINDS).slice()).slice(0, 4);
     d.ans = a.rndi(0, 3);
+    d.rot = []; d.flip = [];
+    for (var i = 0; i < 4; i++) { d.rot.push(a.rnd(.5, 3.14) * (Math.random() < .5 ? -1 : 1)); d.flip.push(Math.random() < .5); }
     d.col = a.pick([a.C.primary, a.C.secondary, a.C.accent, a.C.good, '#ff6a3d']);
   }
 
@@ -335,7 +338,7 @@
   }
 
   /* ---------- 76 ชั่งให้สมดุล ----------  ARM = สัดส่วนภาพคาน+ถาด กว้าง:สูง (วัดจากไฟล์) */
-  var ARM = 2.86;
+  var ARM = 2.86, HUB = .145, PANX = .725, PANY = .88;   /* จุดหมุน = กลางดุมที่ .145 ของความสูงภาพ, ถาดอยู่ที่ ±.725 ของครึ่งความกว้าง */
   R('balancescale', {
     setup: function (a) { a.data.lv = 1; mkScale(a); a.data.fx = 0; a.data.msg = ''; },
     update: function (dt, a) {
@@ -377,7 +380,7 @@
       }
       g.save(); g.translate(cx, cy); g.rotate(d.tilt);
       /* คาน+ถาด: ภาพชิ้นเดียว จุดหมุนอยู่กลางคาน (บนสุดของภาพ) ยืดให้กว้างเท่าแขน */
-      if (art) a.spr('arm', null, 0, arm * 2 / ARM / 2 - a.mn * .012, arm * 2 / ARM, { sx: 1 });
+      if (art) a.spr('arm', null, 0, arm * 2 / ARM * (.5 - HUB), arm * 2 / ARM);
       else a.fillRR(-arm, -a.mn * .012, arm * 2, a.mn * .024, a.mn * .012, a.C.accent);
       [-1, 1].forEach(function (s) {
         var px = s * arm;
@@ -387,7 +390,7 @@
           a.fillRR(px - a.mn * .09, a.mn * .08, a.mn * .18, a.mn * .022, a.mn * .01, '#d8d8e8');
         }
         var v = s < 0 ? d.target : d.right;
-        a.text(v + '', px, art ? arm * 2 / ARM * .80 : a.mn * .04, a.mn * .05, art ? '#5a3a00' : '#fff');
+        a.text(v + '', art ? px * PANX : px, art ? arm * 2 / ARM * (PANY - HUB) : a.mn * .04, a.mn * .05, art ? '#5a3a00' : '#fff');
       });
       g.restore();
       for (var i = 0; i < d.w.length; i++) {
@@ -587,7 +590,9 @@
   R('clockstop', {
     time: 0,
     setup: function (a) {
-      a.data.LO = { R: a.hasSpr('watch') ? Math.min(a.W * .30, a.H * .24) : Math.min(a.W * .34, a.H * .28) };
+      var art = a.hasSpr('watch');
+      /* มีภาพนาฬิกา: ตัวเรือนสูงกว่าหน้าปัดมาก (มีปุ่มด้านบน) เลยเลื่อนศูนย์กลางลงให้ทั้งเรือนอยู่กลางจอ */
+      a.data.LO = { R: art ? Math.min(a.W * .30, a.H * .22) : Math.min(a.W * .34, a.H * .28), cy: art ? (a.port ? a.H * .50 : a.H * .56) : a.H * .48 };
       a.data.ang = 0; a.data.sp = 3.4; a.data.target = a.rndi(0, 11);
       a.data.st = 'run'; a.data.t = 0; a.data.msg = ''; a.data.round = 1; a.data.miss = 0;
     },
@@ -602,7 +607,7 @@
       /* ระยะเชิงมุมระหว่างเข็มกับเลขเป้าหมาย (0 = ตรงเป๊ะ) */
       var diff = Math.abs(((d.ang - tAng + Math.PI * 3) % 6.2832) - Math.PI);
       var deg = diff * 180 / Math.PI;
-      var L = d.LO, hx = a.W / 2 + Math.cos(d.ang - Math.PI / 2) * L.R * .8, hy = a.H * .48 + Math.sin(d.ang - Math.PI / 2) * L.R * .8;
+      var L = d.LO, hx = a.W / 2 + Math.cos(d.ang - Math.PI / 2) * L.R * .8, hy = L.cy + Math.sin(d.ang - Math.PI / 2) * L.R * .8;
       if (deg < 8) { a.add(100); d.msg = a.txt({ th: 'ตรงเป๊ะ! +100', en: 'DEAD ON! +100' }); a.beep(1300, .25, 'triangle'); a.shake(.016, .28); a.flash('#ffd23f', .22); a.puff(hx, hy, { n: 20, col: a.C.accent, spread: 3.14, spd: L.R * 3, size: L.R * .05, life: .6 }); }
       else if (deg < 18) { a.add(50); d.msg = a.txt({ th: 'เฉียด +50', en: 'Close +50' }); a.beep(950, .15); a.shake(.008, .16); a.puff(hx, hy, { n: 10, col: a.C.accent, spread: 3.14, spd: L.R * 2, size: L.R * .04, life: .45 }); }
       else if (deg < 32) { a.add(20); d.msg = a.txt({ th: 'พอได้ +20', en: 'Okay +20' }); a.beep(700, .12); a.shake(.005, .1); }
@@ -611,7 +616,7 @@
     },
     draw: function (g, a) {
       a.bg('#08213d', '#1b4a8c');
-      var d = a.data, L = d.LO, cx = a.W / 2, cy = a.H * .48;
+      var d = a.data, L = d.LO, cx = a.W / 2, cy = L.cy;
       /* ตัวนาฬิกาจับเวลา: ภาพวาดให้หน้าปัดกลมอยู่กลางเฟรม ปุ่มอยู่ด้านบน */
       if (!a.spr('watch', null, cx, cy - L.R * WATCHY, L.R * 2 * WATCHK)) {
         a.circle(cx, cy, L.R * 1.06, '#e8eefc');
@@ -631,7 +636,7 @@
         g.restore();
         a.circle(cx, cy, L.R * .07, '#fff');
       }
-      if (d.msg) a.text(d.msg, cx, cy + L.R * 1.35, a.mn * .055, a.C.accent);
+      if (d.msg) a.text(d.msg, cx, a.hasSpr('watch') ? cy - L.R * WATCHY + L.R * WATCHK + a.mn * .045 : cy + L.R * 1.35, a.mn * .055, a.C.accent);
       a.head(a.txt({ th: 'รอบ ' + d.round + ' — หยุดเข็มที่เลข ' + ((d.target === 0) ? 12 : d.target), en: 'Round ' + d.round + ' — stop the hand on ' + ((d.target === 0) ? 12 : d.target) }));
     }
   });
