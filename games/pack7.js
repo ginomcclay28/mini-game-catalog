@@ -289,7 +289,8 @@
         d.sp = Math.max(.28, .9 - d.t * .02);
       }
       for (var i = d.e.length - 1; i >= 0; i--) {
-        var e = d.e[i]; e.y += e.v * dt; e.f -= dt;
+        var e = d.e[i]; if (e.dead) continue;
+        e.y += e.v * dt; e.f -= dt;
         if (e.f <= 0) { e.f = a.rnd(1.4, 3); d.eb.push({ x: e.x, y: e.y, v: a.mn * .5 }); }
         var hit = false, boom = null;
         if (d.laser > 0 && Math.abs(e.x - d.x) < L.er * .9 && e.y < L.py) hit = true;
@@ -297,11 +298,12 @@
           if (Math.hypot(d.b[k].x - e.x, d.b[k].y - e.y) < L.er) { if (d.b[k].bomb) boom = { x: e.x, y: e.y }; d.b.splice(k, 1); hit = true; }
         }
         if (hit) {
-          killEnemy(a, i);
+          /* ทำเครื่องหมายว่าตาย แล้วค่อยลบทีเดียวหลังลูป (ลบกลางลูปทำให้ index เพี้ยนจนเกมค้าง) */
+          killEnemy(a, e);
           if (boom) {   /* ระเบิดวงกว้าง เก็บตัวรอบ ๆ ไปด้วย */
             a.shake(.014, .2); a.flash('#ff8a3d', .1);
             a.puff(boom.x, boom.y, { n: 22, col: '#ffb060', spread: 6.28, spd: L.er * 9, size: L.er * .25, life: .5, grav: 0 });
-            for (var z = d.e.length - 1; z >= 0; z--) if (Math.hypot(d.e[z].x - boom.x, d.e[z].y - boom.y) < L.er * 4) killEnemy(a, z);
+            d.e.forEach(function (q) { if (!q.dead && Math.hypot(q.x - boom.x, q.y - boom.y) < L.er * 4) killEnemy(a, q); });
           }
           continue;
         }
@@ -310,6 +312,7 @@
           if (e.y <= a.H + L.er && shipHit(a)) return;
         }
       }
+      d.e = d.e.filter(function (q) { return !q.dead; });
       for (var j = d.eb.length - 1; j >= 0; j--) {
         var b = d.eb[j]; b.y += b.v * dt;
         if (Math.hypot(b.x - d.x, b.y - L.py) < L.pr) { d.eb.splice(j, 1); if (shipHit(a)) return; }
@@ -364,9 +367,9 @@
       a.head(a.txt({ th: 'ลากบังคับยาน • เก็บไอเทมอัปเกรดปืน', en: 'Drag to steer • grab items to upgrade' }));
     }
   });
-  function killEnemy(a, i) {
-    var d = a.data, L = d.LO, e = d.e[i]; if (!e) return;
-    d.e.splice(i, 1); d.kills++; a.add(15); a.beep(800, .07); a.shake(.006, .1);
+  function killEnemy(a, e) {
+    var d = a.data, L = d.LO; if (!e || e.dead) return;
+    e.dead = 1; d.kills++; a.add(15); a.beep(800, .07); a.shake(.006, .1);
     a.puff(e.x, e.y, { n: 10, col: '#ff8a3d', spread: 3.14, spd: L.er * 6, size: L.er * .18, life: .45, grav: 0 });
   }
   /* โดนโจมตี: มีเกราะ = เสียเกราะ ไม่เสียชีวิต  คืน true ถ้าเกมจบ */
