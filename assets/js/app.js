@@ -210,9 +210,27 @@
     if (!window.Stats || !Stats.on) return;
     var b = $('#hitBadge'), url = Stats.badge('home');
     if (url) { b.onload = function () { b.style.display = 'block'; }; b.src = url; }
-    Stats.all(GAMES.map(function (g) { return g.id; })).then(function (r) {
-      S = r; renderGrid();
+    /* abacus จำกัด 30 คำขอ/10 วิ -> Stats จะคืนค่าที่จำไว้ก่อน แล้วทยอยอ่านของจริงทีละชุด
+       ส่งเกมที่แสดงอยู่บนหน้านี้ไปก่อน จะได้อัปเดตสิ่งที่เห็นก่อน */
+    var L = list(), s0 = (page - 1) * PER;
+    var ids = L.slice(s0, s0 + PER).map(function (g) { return g.id; }).concat(GAMES.map(function (g) { return g.id; }));
+    function apply(r) {
+      S = r;
+      if (sort !== 'order') renderGrid();          /* ลำดับอาจเปลี่ยน */
+      else updateCounts();
       if (mask.classList.contains('show')) fillModalStats(GAMES[current]);
+    }
+    Stats.all(ids, apply).then(apply);
+  }
+
+  /* อัปเดตตัวเลขบนการ์ดที่แสดงอยู่ โดยไม่วาดกริดใหม่ */
+  function updateCounts() {
+    document.querySelectorAll('.cstats').forEach(function (el) {
+      var h = el.querySelector('.heart'), v = el.querySelector('.vcount b');
+      if (!h) return;
+      var id = h.dataset.h, hb = h.querySelector('b');
+      if (hb) hb.textContent = S.likes[id] || 0;
+      if (v) v.textContent = S.views[id] || 0;
     });
   }
 
