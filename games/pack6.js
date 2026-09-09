@@ -55,14 +55,14 @@
   }
 
   /* ---------- 52 หอคอยฮานอย ----------  DISC = สัดส่วนภาพจาน (วัดจากไฟล์) */
-  var DISC = 1.515;
+  var DISC = 2.26;   /* จานสี d1-d4 วัดจากไฟล์ */
   R('hanoi', {
     setup: function (a) {
       var N = 4;
       a.data.N = N; a.data.pegs = [[4, 3, 2, 1], [], []]; a.data.sel = -1; a.data.mv = 0;
       a.data.LO = {
         pw: a.W / 3, base: a.H * .74, ph: Math.min(a.mn * .42, a.H * .32),
-        dh: a.mn * .062, unit: Math.min(a.W / 3 * .22, a.mn * .07)
+        dh: a.mn * .075, unit: Math.min(a.W / 3 * .22, a.mn * .075)
       };
     },
     down: function (x, y, a) {
