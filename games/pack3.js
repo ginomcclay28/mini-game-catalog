@@ -23,7 +23,8 @@
   ];
   R('sortbin', {
     setup: function (a) {
-      var bw = Math.min(a.W / 3 * .84, a.mn * .30), bh = bw * (a.port ? 1.05 : .78);
+      /* ถังใหญ่ขึ้น 60% (แนวตั้งจำกัดที่ 3 ถังต้องไม่ชนกัน) */
+      var bw = Math.min(a.W / 3 * .95, a.mn * .48), bh = bw * (a.port ? 1.05 : .78);
       a.data.LO = { bw: bw, bh: bh, by: a.H - bh - a.mn * .07, is: a.mn * .12, home: { x: a.W / 2, y: a.H * .26 } };
       a.data.drag = null; a.data.fx = 0; a.data.fxc = '';
       newItem(a);
@@ -53,7 +54,7 @@
         var b = BINS[i], bx = a.W / 6 + i * a.W / 3;
         if (a.spr(b.k, null, bx, L.by + L.bh * .5, L.bh * 1.05)) {
           a.fillRR(bx - L.bw * .42, L.by + L.bh * .86, L.bw * .84, L.bw * .17, L.bw * .05, 'rgba(0,0,0,.45)');
-          a.text(a.lang === 'en' ? b.en : b.th, bx, L.by + L.bh * .86 + L.bw * .085, L.bw * .12, '#fff');
+          a.text(a.lang === 'en' ? b.en : b.th, bx, L.by + L.bh * .86 + L.bw * .085, Math.min(L.bw * .12, a.mn * .045), '#fff');
         } else {
           a.fillRR(bx - L.bw / 2, L.by, L.bw, L.bh, L.bw * .09, b.c);
           a.fillRR(bx - L.bw * .56, L.by - L.bh * .13, L.bw * 1.12, L.bh * .17, L.bw * .05, 'rgba(0,0,0,.28)');
