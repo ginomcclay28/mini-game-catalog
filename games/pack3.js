@@ -627,7 +627,7 @@
                { k: 't5', e: '🚀' }, { k: 't6', e: '🦖' }, { k: 't7', e: '🚗' }, { k: 't8', e: '🥁' }];
   R('hiddenobj', {
     setup: function (a) {
-      a.data.LO = { hb: a.mn * .14, is: a.mn * .066 };
+      a.data.LO = { hb: a.mn * .14, is: a.mn * .132 };   /* ไอคอน 2 เท่า */
       a.data.lv = 1; a.data.fx = 0; mkh(a);
     },
     update: function (dt, a) { if (a.data.fx > 0) a.data.fx -= dt; },
@@ -653,7 +653,7 @@
       g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, a.W, L.hb);
       var cy = L.hb * .5;
       a.text(a.txt({ th: 'หาให้เจอ:', en: 'Find:' }), a.W * .5 - a.mn * .12, cy, a.mn * .042, '#fff', 'right');
-      a.spr(d.target.k, d.target.e, a.W * .5 - a.mn * .05, cy, a.mn * .08 * (1 + Math.sin(a.now * 4) * .05));
+      a.spr(d.target.k, d.target.e, a.W * .5 - a.mn * .05, cy, a.mn * .12 * (1 + Math.sin(a.now * 4) * .05));
       a.text(a.txt({ th: 'รอบ ' + d.lv, en: 'Round ' + d.lv }), a.W * .5 + a.mn * .09, cy, a.mn * .036, 'rgba(255,255,255,.75)', 'left');
       if (d.fx > 0) { g.fillStyle = 'rgba(255,82,82,' + d.fx * 1.2 + ')'; g.fillRect(0, 0, a.W, a.H); }
     }
@@ -662,12 +662,12 @@
     var d = a.data, L = d.LO;
     var pool = a.shuffle(ICONS.slice());
     d.target = pool[0];
-    var n = Math.min(70, 22 + d.lv * 5);
+    var n = Math.min(40, 14 + d.lv * 4);   /* ไอคอนใหญ่ขึ้น ลดจำนวนลงให้ไม่ทับกันจนมิด */
     d.o = [];
     var m = L.is * .6;
     for (var i = 0; i < n; i++)
       d.o.push({ e: pool[1 + (i % (pool.length - 1))], x: a.rnd(m, a.W - m), y: a.rnd(L.hb + m, a.H - m), r: a.rnd(-.5, .5) });
+    /* เป้าหมายใส่ท้ายสุด = วาดทับบนสุด ไม่โดนตัวอื่นบังจนหาไม่เจอ */
     d.o.push({ e: d.target, x: a.rnd(m, a.W - m), y: a.rnd(L.hb + m, a.H - m), r: a.rnd(-.4, .4) });
-    a.shuffle(d.o);
   }
 })();

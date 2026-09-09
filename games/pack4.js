@@ -19,7 +19,7 @@
   /* ---------- 31 ปาดผลไม้ ---------- */
   R('fruitninja', {
     setup: function (a) {
-      a.data.LO = { r: a.mn * .055, G: a.mn * 1.55 };
+      a.data.LO = { r: a.mn * .083, G: a.mn * 1.55 };   /* ผลไม้ใหญ่ขึ้น 50% */
       a.data.f = []; a.data.sp = .3; a.data.trail = []; a.data.flash = 0; a.data.combo = 0;
       /* ผลไม้ 7 ชนิด  k = คีย์ภาพ  e = อิโมจิสำรอง  j = สีน้ำผลไม้ตอนฟันโดน */
       a.data.kinds = [{ k: 'melon', e: '🍉', j: '#ff5c7a' }, { k: 'apple', e: '🍎', j: '#ff4d4d' }, { k: 'orange', e: '🍊', j: '#ffa53d' },
