@@ -605,11 +605,14 @@
       var d = a.data, L = d.LO, offX = a.W / 2 - d.x, offY = a.H * .70 - d.y;
       g.save();
       g.translate(offX, offY);
-      d.cells.forEach(function (c) {
-        var x = c.c * L.s, y = -c.r * L.s, sy = y + offY;
-        if (sy < -L.s || sy > a.H + L.s) return;
-        a.fillRR(x - L.s * .5, y - L.s * .5, L.s, L.s, L.s * .12, 'rgba(255,255,255,.9)');
-      });
+      /* ทางเดิน: ภาพบล็อกมีหน้าด้านข้าง (สูงกว่ากว้าง) วางให้หน้าบนตรงช่อง วาดจากแถวไกลมาใกล้ให้ด้านข้างซ้อนถูก */
+      var ti = a.sprImg('tile'), tw = L.s * 1.02, th = ti ? tw * ti.height / ti.width : 0;
+      for (var i = d.cells.length - 1; i >= 0; i--) {
+        var c = d.cells[i], x = c.c * L.s, y = -c.r * L.s, sy = y + offY;
+        if (sy < -L.s * 2 || sy > a.H + L.s * 2) continue;
+        if (ti) a.spr('tile', null, x, y - tw / 2 + th / 2, th);
+        else a.fillRR(x - L.s * .5, y - L.s * .5, L.s, L.s, L.s * .12, 'rgba(255,255,255,.9)');
+      }
       var roll = -d.y / L.s * 2;   // ลูกบอลกลิ้งตามระยะทาง
       if (!a.spr('ball', null, d.x, d.y, L.br * 2.2, { rot: roll })) a.circle(d.x, d.y, L.br, a.C.primary);
       g.restore();

@@ -695,31 +695,53 @@
       a.fillRR(L.ox - L.wt, L.oy - L.wt, L.pw + L.wt * 2, L.ph + L.wt * 2, L.wt * 1.4, '#3a3a52');
       a.fillRR(L.ox - L.wt * .4, L.oy - L.wt * .4, L.pw + L.wt * .8, L.ph + L.wt * .8, L.wt * 1.1, '#1b1b2e');
       /* พื้นสนาม */
+      var art = a.hasSpr('flipper');
       var gr = g.createLinearGradient(0, L.oy, 0, L.oy + L.ph);
-      gr.addColorStop(0, '#22467e'); gr.addColorStop(1, '#0b1830');
+      if (art) { gr.addColorStop(0, '#3f7fe0'); gr.addColorStop(1, '#2a3fb8'); }
+      else { gr.addColorStop(0, '#22467e'); gr.addColorStop(1, '#0b1830'); }
       g.fillStyle = gr; a.rr(L.ox, L.oy, L.pw, L.ph, L.wt); g.fill();
       /* รางปล่อยลูก */
       a.fillRR(L.innerR + L.wt * .25, L.topY, L.lw - L.wt * .5, L.ph - L.wt * 2, L.wt * .5, 'rgba(0,0,0,.4)');
       /* ลายวงกลมตกแต่งกลางสนาม */
-      g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = L.wt * .4;
-      g.beginPath(); g.arc(L.cx, L.oy + L.ph * .40, L.pw * .34, 0, 6.2832); g.stroke();
-      a.text('PINBALL', L.cx, L.oy + L.ph * .40, L.pw * .10, 'rgba(255,255,255,.07)');
+      if (!a.spr('star', null, L.cx, L.oy + L.ph * .47, L.pw * .34, { alpha: .9, rot: Math.sin(a.now * .7) * .05 })) {
+        g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = L.wt * .4;
+        g.beginPath(); g.arc(L.cx, L.oy + L.ph * .40, L.pw * .34, 0, 6.2832); g.stroke();
+        a.text('PINBALL', L.cx, L.oy + L.ph * .40, L.pw * .10, 'rgba(255,255,255,.07)');
+      }
 
       /* เป้าล้ม */
       d.targ.forEach(function (o) {
-        a.fillRR(o.x - o.w / 2, o.y - L.pw * .022, o.w, L.pw * .044, L.pw * .012,
-          o.on ? a.C.good : 'rgba(255,255,255,.14)');
+        if (!a.spr('target', null, o.x, o.y, L.pw * .075, { sx: o.w / (L.pw * .075), alpha: o.on ? 1 : .28 }))
+          a.fillRR(o.x - o.w / 2, o.y - L.pw * .022, o.w, L.pw * .044, L.pw * .012, o.on ? a.C.good : 'rgba(255,255,255,.14)');
       });
 
       /* กำแพง */
-      g.lineCap = 'round'; g.strokeStyle = '#8fb0ff'; g.lineWidth = L.wt * .5;
-      d.walls.forEach(function (q) { g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(q[2], q[3]); g.stroke(); });
+      g.lineCap = 'round';
+      if (art) {   /* กำแพงชมพูขอบเหลืองแบบภาพปก */
+        g.strokeStyle = '#ff4f8b'; g.lineWidth = L.wt * .9;
+        d.walls.forEach(function (q) { g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(q[2], q[3]); g.stroke(); });
+        g.strokeStyle = '#ffd23f'; g.lineWidth = L.wt * .28;
+        d.walls.forEach(function (q) { g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(q[2], q[3]); g.stroke(); });
+      } else {
+        g.strokeStyle = '#8fb0ff'; g.lineWidth = L.wt * .5;
+        d.walls.forEach(function (q) { g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(q[2], q[3]); g.stroke(); });
+      }
 
       /* สลิงช็อต */
-      d.sling.forEach(function (o) {
-        g.strokeStyle = o.t > 0 ? '#fff' : a.C.primary;
-        g.lineWidth = L.wt * (o.t > 0 ? 1.0 : .8);
-        g.beginPath(); g.moveTo(o.ax, o.ay); g.lineTo(o.bx, o.by); g.stroke();
+      d.sling.forEach(function (o, si) {
+        /* ภาพสลิงช็อต: ขอบยาวอยู่ด้านล่างของภาพ ตัวสามเหลี่ยมอยู่เหนือขอบ -> หมุนให้ขอบทาบเส้นชน ตัวหันเข้ากำแพง */
+        var len = Math.hypot(o.bx - o.ax, o.by - o.ay), mx = (o.ax + o.bx) / 2, my = (o.ay + o.by) / 2;
+        var rot = si === 0 ? Math.atan2(o.ay - o.by, o.ax - o.bx) : Math.atan2(o.by - o.ay, o.bx - o.ax);
+        var im = a.sprImg('sling');
+        if (im) {
+          var sw = len * 1.08, sh = sw * im.height / im.width, nx = Math.sin(rot), ny = -Math.cos(rot);
+          a.spr('sling', null, mx + nx * sh * .5, my + ny * sh * .5, sh, { rot: rot, alpha: o.t > 0 ? 1 : .95 });
+          if (o.t > 0) { g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = L.wt * .6; g.beginPath(); g.moveTo(o.ax, o.ay); g.lineTo(o.bx, o.by); g.stroke(); }
+        } else {
+          g.strokeStyle = o.t > 0 ? '#fff' : a.C.primary;
+          g.lineWidth = L.wt * (o.t > 0 ? 1.0 : .8);
+          g.beginPath(); g.moveTo(o.ax, o.ay); g.lineTo(o.bx, o.by); g.stroke();
+        }
       });
 
       /* หมุดชน */
@@ -732,12 +754,21 @@
       });
 
       /* แป้นตี */
-      d.f.forEach(function (f) {
+      d.f.forEach(function (f, fi) {
         var tip = flipTip(f, L);
-        g.strokeStyle = f.up ? '#fff' : a.C.secondary;
-        g.lineWidth = L.br * 1.5; g.lineCap = 'round';
-        g.beginPath(); g.moveTo(f.px, f.py); g.lineTo(tip.x, tip.y); g.stroke();
-        a.circle(f.px, f.py, L.br * .5, '#cfd8ff');
+        /* ภาพแป้น: จุดหมุนอยู่ปลายกลมด้านซ้าย ชี้ไปทางขวา -> ซ้ายใช้ตรง ๆ  ขวาพลิกภาพแล้วหมุนกลับ */
+        var fw = L.fl * 1.12, fim = a.sprImg('flipper');
+        if (fim) {
+          var fh = fw * fim.height / fim.width, ang = f.ang;
+          var cx2 = f.px + Math.cos(ang) * L.fl * .5, cy2 = f.py + Math.sin(ang) * L.fl * .5;
+          a.spr('flipper', null, cx2, cy2, fh, { rot: fi === 0 ? ang : ang - Math.PI, flip: fi === 1 });
+          if (f.up && f.t < .15) { g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = L.br * .6; g.beginPath(); g.moveTo(f.px, f.py); g.lineTo(tip.x, tip.y); g.stroke(); }
+        } else {
+          g.strokeStyle = f.up ? '#fff' : a.C.secondary;
+          g.lineWidth = L.br * 1.5; g.lineCap = 'round';
+          g.beginPath(); g.moveTo(f.px, f.py); g.lineTo(tip.x, tip.y); g.stroke();
+          a.circle(f.px, f.py, L.br * .5, '#cfd8ff');
+        }
       });
 
       /* สปริงปล่อยลูก */

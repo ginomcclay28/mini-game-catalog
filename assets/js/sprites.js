@@ -335,6 +335,7 @@ window.GAME_SPRITES = {
 
   /* ---------- 40 ซิกแซก ---------- */
   zigzag: {
+    tile: 'tile.png',   // บล็อกทางเดินสีเหลือง มีหน้าด้านข้างสีม่วงใต้หน้าบน
     ball: 'ball.png',   // ลูกบอลที่กลิ้ง
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   },
@@ -423,7 +424,9 @@ window.GAME_SPRITES = {
 
   /* ---------- 52 หอคอยฮานอย ---------- */
   hanoi: {
-    disc: 'disc.png',   // จาน 1 ใบ ขาว/เทา เกมย้อมสีและยืดตามขนาด
+    d1: 'd1.png', d2: 'd2.png', d3: 'd3.png', d4: 'd4.png',   // จานสี เล็ก(1) -> ใหญ่(4) ยืดกว้างตามขนาด
+    peg: 'peg.png',     // เสาม่วง 1 ต้น
+    base: 'base.png',   // แถบฐานม่วง ยืดตามความกว้าง
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   },
 
@@ -525,8 +528,12 @@ window.GAME_SPRITES = {
 
   /* ---------- 67 พินบอล ---------- */
   pinball: {
-    ball:   'ball.png',     // ลูกเหล็ก
-    bumper: 'bumper.png',   // หมุดชนกลม
+    ball:    'ball.png',     // ลูกเหล็ก
+    bumper:  'bumper.png',   // หมุดชนกลม แดง-เหลือง ดาวตรงกลาง
+    flipper: 'flipper.png',  // แป้นตี ชมพูขอบเหลือง จุดหมุนปลายกลมด้านซ้าย ชี้ขวา
+    sling:   'sling.png',    // สลิงช็อตสามเหลี่ยมม่วง ขอบยาวอยู่ด้านล่างภาพ
+    target:  'target.png',   // เป้าล้ม (สว่าง) โค้ดทำจางเมื่อโดนแล้ว
+    star:    'star.png',     // ดาวประดับกลางสนาม
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   },
 

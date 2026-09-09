@@ -84,24 +84,30 @@
     draw: function (g, a) {
       a.bg('#3a1a0a', '#c8761e');
       var d = a.data, L = d.LO;
+      /* ฐานยาวชิ้นเดียวรองรับ 3 เสา (ภาพยืดตามความกว้าง) + เสาแยกชิ้น */
+      var bi = a.sprImg('base'), art2 = a.hasSpr('peg');
+      if (bi) { var bh = a.mn * .06, bwid = a.W * .92; g.drawImage(bi, (a.W - bwid) / 2, L.base - bh * .25, bwid, bh); }
       for (var p = 0; p < 3; p++) {
         var cx = L.pw * (p + .5);
-        a.fillRR(cx - L.pw * .42, L.base, L.pw * .84, a.mn * .022, a.mn * .01, '#5a3a18');
-        a.fillRR(cx - a.mn * .012, L.base - L.ph, a.mn * .024, L.ph, a.mn * .01, '#5a3a18');
+        if (!bi) a.fillRR(cx - L.pw * .42, L.base, L.pw * .84, a.mn * .022, a.mn * .01, '#5a3a18');
+        if (!a.spr('peg', null, cx, L.base - L.ph / 2, L.ph * 1.04)) a.fillRR(cx - a.mn * .012, L.base - L.ph, a.mn * .024, L.ph, a.mn * .01, '#5a3a18');
         if (d.sel === p) { g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .008; a.rr(cx - L.pw * .44, L.base - L.ph - a.mn * .03, L.pw * .88, L.ph + a.mn * .06, a.mn * .02); g.stroke(); }
         var topY = -1;
         d.pegs[p].forEach(function (disc, i) {
           var w = L.unit * (disc + 1.4), h = L.dh, col = 'hsl(' + (disc * 55 + 190) + ',75%,58%)';
           var lift = (d.sel === p && i === d.pegs[p].length - 1) ? a.mn * .03 : 0;   // จานบนสุดที่เลือกยกขึ้น
           var dy = L.base - (i + .5) * h - a.mn * .004 - lift;
-          if (!a.sprTint('disc', col, null, cx, dy, h - a.mn * .006, { sx: w / ((h - a.mn * .006) * DISC) }))
-            a.fillRR(cx - w / 2, L.base - (i + 1) * h - a.mn * .004 - lift, w, h - a.mn * .006, h * .3, col);
+          /* จานสีตามภาพปก d1-d4 (ใหญ่->เล็ก) ยืดกว้างตามขนาด  ไม่มี = จานขาวย้อมสี */
+          var dh = h - a.mn * .006;
+          if (!a.spr('d' + disc, null, cx, dy, dh, { sx: w / (dh * DISC) }) && !a.sprTint('disc', col, null, cx, dy, dh, { sx: w / (dh * DISC) }))
+            a.fillRR(cx - w / 2, L.base - (i + 1) * h - a.mn * .004 - lift, w, dh, h * .3, col);
           topY = dy - h * .10;   /* ระดับรูของจานบนสุด */
         });
         /* วาดเสาทับอีกรอบเฉพาะส่วนที่โผล่พ้นรูจานบนสุด ให้เห็นเสาลอดรู */
         if (topY > 0) {
-          g.save(); g.beginPath(); g.rect(cx - a.mn * .02, L.base - L.ph, a.mn * .04, topY - (L.base - L.ph)); g.clip();
-          a.fillRR(cx - a.mn * .012, L.base - L.ph, a.mn * .024, L.ph, a.mn * .01, '#5a3a18'); g.restore();
+          g.save(); g.beginPath(); g.rect(cx - a.mn * .03, L.base - L.ph - a.mn * .02, a.mn * .06, topY - (L.base - L.ph) + a.mn * .02); g.clip();
+          if (!a.spr('peg', null, cx, L.base - L.ph / 2, L.ph * 1.04)) a.fillRR(cx - a.mn * .012, L.base - L.ph, a.mn * .024, L.ph, a.mn * .01, '#5a3a18');
+          g.restore();
         }
       }
       a.head(a.txt({ th: 'ย้ายทั้งกองไปเสาขวา • ตาที่ใช้ ' + d.mv, en: 'Move the stack to the right peg • ' + d.mv + ' moves' }));
