@@ -757,11 +757,13 @@
       d.f.forEach(function (f, fi) {
         var tip = flipTip(f, L);
         /* ภาพแป้น: จุดหมุนอยู่ปลายกลมด้านซ้าย ชี้ไปทางขวา -> ซ้ายใช้ตรง ๆ  ขวาพลิกภาพแล้วหมุนกลับ */
-        var fw = L.fl * 1.12, fim = a.sprImg('flipper');
+        /* ภาพแป้น: จุดหมุน (ปลายกลม) อยู่ที่ 11% ของความกว้างภาพ -> ยืดให้จากจุดหมุนถึงปลายยาวเท่า L.fl */
+        var fim = a.sprImg('flipper'), FP = .111;
         if (fim) {
-          var fh = fw * fim.height / fim.width, ang = f.ang;
-          var cx2 = f.px + Math.cos(ang) * L.fl * .5, cy2 = f.py + Math.sin(ang) * L.fl * .5;
-          a.spr('flipper', null, cx2, cy2, fh, { rot: fi === 0 ? ang : ang - Math.PI, flip: fi === 1 });
+          var fw = L.fl * 1.06 / (1 - FP), fh = fw * fim.height / fim.width, ang = f.ang;
+          var off = fw * (.5 - FP);                                  /* ระยะจากจุดหมุนไปกึ่งกลางภาพ */
+          var cx2 = f.px + Math.cos(ang) * off, cy2 = f.py + Math.sin(ang) * off;
+          a.spr('flipper', null, cx2, cy2, fh, { rot: fi === 0 ? ang : ang - Math.PI, flip: fi === 1, sy: 1.35 });   /* ภาพผอมกว่าปกนิด ยืดหนาขึ้น */
           if (f.up && f.t < .15) { g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = L.br * .6; g.beginPath(); g.moveTo(f.px, f.py); g.lineTo(tip.x, tip.y); g.stroke(); }
         } else {
           g.strokeStyle = f.up ? '#fff' : a.C.secondary;

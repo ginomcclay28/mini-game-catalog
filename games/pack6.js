@@ -59,7 +59,7 @@
      เสาห่างกัน .30S หนา .035S สูง .40S  ฐานกว้าง .97S สูง .08S
      จาน 4 ใบ กว้าง .16/.20/.25/.29S หนา .060/.068/.076/.084S  (DISC = สัดส่วนภาพจาน) */
   var DISC = 2.26;
-  var HN = { gap: .30, pegW: .035, pegH: .40, baseW: .97, baseH: .08, dw: [.16, .20, .25, .29], dh: [.060, .068, .076, .084] };
+  var HN = { gap: .30, pegW: .04, pegH: .40, baseW: .97, baseH: .08, dw: [.17, .21, .25, .29], dh: [.12, .13, .14, .15], step: .5 };   /* จานหนา ซ้อนทับกันเต็มหน้าบน (ภาพจานอุดรูแล้ว) */
   function hnX(a, p) { return a.W / 2 + (p - 1) * HN.gap * a.data.LO.S; }
   function hnDiscW(a, disc) { return HN.dw[disc - 1] * a.data.LO.S; }
   function hnDiscH(a, disc) { return HN.dh[disc - 1] * a.data.LO.S; }
@@ -106,8 +106,8 @@
           var dy = y - h * .5 - lift;
           if (!a.spr('d' + disc, null, cx, dy, h, { sx: w / (h * DISC) }))
             a.fillRR(cx - w / 2, dy - h / 2, w, h, h * .3, col);
-          y -= h * .78;                       /* จานซ้อนกัน หน้าบนของใบล่างถูกใบบนบังบางส่วน */
-          topY = dy - h * .18;
+          y -= h * HN.step;                   /* ใบบนซ้อนลงมาบังหน้าบน (และรู) ของใบล่างทั้งหมด */
+          topY = dy - h * .30;              /* เสาโผล่จากกลางหน้าบนของจานบนสุด */
         });
         /* เสาโผล่ทะลุรูจานบนสุด */
         if (topY > 0) {
