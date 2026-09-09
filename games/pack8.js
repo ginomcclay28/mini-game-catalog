@@ -213,21 +213,25 @@
     var ICON = [{ k: 't1', e: '🧸' }, { k: 't2', e: '🤖' }, { k: 't3', e: '🦆' }, { k: 't4', e: '⚽' }, { k: 't5', e: '🚀' }, { k: 't6', e: '🦖' }, { k: 't7', e: '🚗' }, { k: 't8', e: '🥁' },
                 { k: 'i1', e: '🍎' }, { k: 'i2', e: '⭐' }, { k: 'i3', e: '🐟' }, { k: 'i4', e: '🌸' }, { k: 'i5', e: '🚙' }, { k: 'i6', e: '📷' }, { k: 'i7', e: '🍩' }, { k: 'i8', e: '🌵' },
                 { k: 's1', e: '🛸' }, { k: 's2', e: '🪐' }, { k: 's3', e: '🌙' }, { k: 's4', e: '👽' }, { k: 's5', e: '🚁' }, { k: 's6', e: '☄️' }];
-    d.size = a.mn * .07;
-    var n = Math.min(18, 8 + d.lv * 2);
+    /* ไอคอนใหญ่ 2 เท่า และเยอะขึ้น (12-22 แบบ + ตัวซ้ำ 1) วางแบบตารางสุ่ม ให้กระจายเต็มจอไม่ทับกัน */
+    var n = Math.min(ICON.length, 12 + d.lv * 2);
     var pool = a.shuffle(ICON.slice()).slice(0, n);
     var dup = pool[0];
     var list = pool.slice(0, n).concat([dup]);
     a.shuffle(list);
     d.o = []; d.first = -1;
-    var top = a.mn * .17, m = d.size * .6;
-    list.forEach(function (e) {
-      var x, y, ok, tries = 0;
-      do {
-        x = a.rnd(m, a.W - m); y = a.rnd(top + m, a.H - m);
-        ok = d.o.every(function (q) { return Math.hypot(q.x - x, q.y - y) > d.size * 1.15; });
-      } while (!ok && ++tries < 80);
-      d.o.push({ e: e, x: x, y: y, r: a.rnd(-.4, .4), dup: e === dup ? 1 : 0, sel: 0 });
+    var top = a.mn * .17, bot = a.H - a.mn * .05;
+    var aw = a.W - a.mn * .06, ah = bot - top, cnt = list.length;
+    var cols = Math.max(2, Math.round(Math.sqrt(cnt * aw / ah))), rows = Math.ceil(cnt / cols);
+    while (cols * rows < cnt) rows++;
+    var cw = aw / cols, ch = ah / rows;
+    d.size = Math.min(a.mn * .14, Math.min(cw, ch) / 1.4);          /* 2 เท่าของเดิม แต่ไม่เกินช่อง */
+    var cells = []; for (var i = 0; i < cols * rows; i++) cells.push(i);
+    a.shuffle(cells);
+    list.forEach(function (e, k) {
+        var c = cells[k], cx = a.mn * .03 + (c % cols + .5) * cw, cy = top + (Math.floor(c / cols) + .5) * ch;
+        var jx = Math.max(0, (cw - d.size * 1.3) / 2), jy = Math.max(0, (ch - d.size * 1.3) / 2);
+        d.o.push({ e: e, x: cx + a.rnd(-jx, jx), y: cy + a.rnd(-jy, jy), r: a.rnd(-.4, .4), dup: e === dup ? 1 : 0, sel: 0 });
     });
   }
 
