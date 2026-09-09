@@ -84,6 +84,11 @@
       var d = a.data, L = d.LO;
       d.rot += d.sp * dt;
       if (d.pop > 0) d.pop -= dt;
+      if (d.burst) {
+        d.burst.t -= dt;
+        d.burst.p.forEach(function (q) { q.vy += a.mn * 2.6 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.rot += q.vr * dt; });
+        if (d.burst.t <= 0) d.burst = null;
+      }
       /* ลูกดอกที่ชนแล้วเด้งออก: ตกตามแรงโน้มถ่วง หมุนไปด้วย */
       for (var i = d.bn.length - 1; i >= 0; i--) {
         var b = d.bn[i]; b.vy += a.mn * 2.4 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt; b.t -= dt;
@@ -107,14 +112,27 @@
           d.stuck.push(ang); a.add(20); a.beep(900, .1); d.pop = .18; a.shake(.008, .14);
           a.puff(L.cx, L.cy + L.R, { n: 8, col: d.f.flesh, spread: 3.14, spd: L.R * 2, size: L.R * .06, life: .4 });
           if (d.stuck.length >= d.need) {
-            a.add(50); d.round++; d.stuck = []; d.sp *= 1.16;
+            /* ครบแล้ว: ผลไม้ระเบิดเป็นชิ้น ๆ พร้อมลูกดอกกระเด็น แล้วค่อยขึ้นรอบใหม่ */
+            a.add(50); a.beep(1200, .2, 'triangle'); a.flash('#ffd23f', .2); a.shake(.02, .3);
+            a.puff(L.cx, L.cy, { n: 26, col: d.f.flesh, spread: 6.28, spd: L.R * 4, size: L.R * .07, life: .7 });
+            a.puff(L.cx, L.cy, { n: 14, col: '#fff', spread: 6.28, spd: L.R * 3, size: L.R * .04, life: .5 });
+            d.burst = { t: 1.0, rot: d.rot, f: d.f, p: [] };
+            var N = 6;
+            for (var q = 0; q < N; q++) {
+              var an = d.rot + (q + .5) * 6.2832 / N, sp = L.R * a.rnd(2.5, 4);
+              d.burst.p.push({ a0: q * 6.2832 / N, x: L.cx, y: L.cy, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - L.R * 1.5, rot: 0, vr: a.rnd(-6, 6) });
+            }
+            d.stuck.forEach(function (sa) {
+              var an2 = sa + d.rot;
+              d.bn.push({ x: L.cx + Math.cos(an2) * L.R, y: L.cy + Math.sin(an2) * L.R, vx: Math.cos(an2) * L.R * 3, vy: Math.sin(an2) * L.R * 3 - L.R, rot: an2 + Math.PI, vr: a.rnd(-8, 8), t: 1.2 });
+            });
+            d.round++; d.stuck = []; d.sp *= 1.16;
             d.need = d.need + 1; d.f = a.pick(FRUITS);   /* ทุกรอบต้องปักเพิ่มอีก 1 ลูก */
-            a.beep(1200, .2, 'triangle'); a.flash('#ffd23f', .2); a.shake(.014, .3);
           }
         }
       }
     },
-    down: function (x, y, a) { if (!a.data.fl) { a.data.fl = { y: a.data.LO.sy }; a.beep(450, .05); } },
+    down: function (x, y, a) { if (!a.data.fl && !a.data.burst) { a.data.fl = { y: a.data.LO.sy }; a.beep(450, .05); } },
     draw: function (g, a) {
       a.bg('#2b0f4a', '#c81d6b');
       var d = a.data, L = d.LO;
@@ -129,7 +147,17 @@
       g.fillStyle = 'rgba(0,0,0,.22)';
       g.beginPath(); g.ellipse(L.cx, L.cy + R2 * 1.25, R2 * .78, R2 * .12, 0, 0, 6.2832); g.fill();
 
-      drawFruit(g, a, L.cx, L.cy, R2, d.f, d.rot);
+      if (d.burst) {
+        /* ชิ้นผลไม้: ภาพผลไม้ตัดเป็นกลีบ 6 ส่วน กระเด็นออกแล้วตก ค่อย ๆ จาง */
+        var B = d.burst, N = B.p.length, al = Math.min(1, B.t * 2.5);
+        B.p.forEach(function (q) {
+          g.save(); g.globalAlpha = al; g.translate(q.x, q.y); g.rotate(q.rot);
+          g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, L.R * 1.05, q.a0, q.a0 + 6.2832 / N); g.closePath(); g.clip();
+          drawFruit(g, a, 0, 0, L.R, B.f, B.rot);
+          g.restore();
+        });
+        g.globalAlpha = 1;
+      } else drawFruit(g, a, L.cx, L.cy, R2, d.f, d.rot);
 
       /* ลูกดอกที่ปักอยู่ หมุนไปพร้อมผลไม้ ปลายจิ้มที่ขอบ */
       g.save(); g.translate(L.cx, L.cy); g.rotate(d.rot);
@@ -933,7 +961,7 @@
       a.data.LO = { ox: a.W / 2, oy: a.H - a.mn * .12, G: a.mn * 1.5 };
       a.data.pegs = []; a.data.aim = null; a.data.r = null; a.data.left = 10; a.data.msg = '';
       for (var i = 0; i < 5; i++)
-        a.data.pegs.push({ x: a.W * (.18 + i * .16), y: a.H * (.30 + (i % 2) * .08), on: 0, p: 20 + i * 10 });
+        a.data.pegs.push({ x: a.W * (.18 + i * .16), y: a.H * (.32 + (i % 2) * .10), on: 0, p: 20 + i * 10 });
     },
     update: function (dt, a) {
       var d = a.data, L = d.LO;
@@ -941,7 +969,7 @@
       d.r.vy += L.G * dt; d.r.x += d.r.vx * dt; d.r.y += d.r.vy * dt;
       for (var i = 0; i < d.pegs.length; i++) {
         var p = d.pegs[i];
-        if (!p.on && Math.hypot(p.x - d.r.x, p.y - d.r.y) < a.mn * .045 && d.r.vy > 0) {
+        if (!p.on && Math.hypot(p.x - d.r.x, p.y - d.r.y) < a.mn * .0675 && d.r.vy > 0) {
           p.on = 1; a.add(p.p); d.msg = '+' + p.p; a.beep(1000, .15, 'triangle'); d.r = null;
           a.shake(.01, .18);
           a.puff(p.x, p.y, { n: 12, col: a.C.accent, spread: 3.14, spd: a.mn * .5, size: a.mn * .01, life: .5 });
@@ -972,21 +1000,21 @@
       g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, a.H * .42, a.W, a.H - a.H * .42);
       d.pegs.forEach(function (p) {
         /* เสา: ภาพวาดให้ฐานอยู่ล่างสุดของเฟรม  จุด (p.x,p.y) คือฐานเสา */
-        if (!a.spr('peg', null, p.x, p.y - a.mn * .065, a.mn * .15)) {
-          a.fillRR(p.x - a.mn * .012, p.y - a.mn * .09, a.mn * .024, a.mn * .09, a.mn * .01, '#c9a227');
-          a.circle(p.x, p.y, a.mn * .022, '#8a6a12');
+        if (!a.spr('peg', null, p.x, p.y - a.mn * .0975, a.mn * .225)) {   /* เสา 1.5 เท่า */
+          a.fillRR(p.x - a.mn * .018, p.y - a.mn * .135, a.mn * .036, a.mn * .135, a.mn * .015, '#c9a227');
+          a.circle(p.x, p.y, a.mn * .033, '#8a6a12');
         }
         /* ห่วงที่คล้องแล้ว: วางบนกองห่วงที่วาดไว้ในภาพเสา แล้ววาดเสาทับครึ่งบนอีกที ให้เสาลอดรูห่วง */
         if (p.on) {
-          var ry = p.y - a.mn * .052;
-          if (a.spr('ring', null, p.x, ry, a.mn * .1 / RING)) {
-            g.save(); g.beginPath(); g.rect(p.x - a.mn * .04, p.y - a.mn * .16, a.mn * .08, ry - (p.y - a.mn * .16)); g.clip();
-            a.spr('peg', null, p.x, p.y - a.mn * .065, a.mn * .15); g.restore();
+          var ry = p.y - a.mn * .078;
+          if (a.spr('ring', null, p.x, ry, a.mn * .15 / RING)) {
+            g.save(); g.beginPath(); g.rect(p.x - a.mn * .06, p.y - a.mn * .24, a.mn * .12, ry - (p.y - a.mn * .24)); g.clip();
+            a.spr('peg', null, p.x, p.y - a.mn * .0975, a.mn * .225); g.restore();
           } else {
-            g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .012; g.beginPath(); g.ellipse(p.x, p.y - a.mn * .01, a.mn * .045, a.mn * .018, 0, 0, 6.29); g.stroke();
+            g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .018; g.beginPath(); g.ellipse(p.x, p.y - a.mn * .015, a.mn * .0675, a.mn * .027, 0, 0, 6.29); g.stroke();
           }
         }
-        a.text(p.p + '', p.x, p.y + a.mn * .05, a.mn * .032, 'rgba(255,255,255,.8)');
+        a.text(p.p + '', p.x, p.y + a.mn * .06, a.mn * .034, 'rgba(255,255,255,.8)');
       });
       if (d.aim) {
         g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = a.mn * .006; g.setLineDash([9, 7]);
@@ -994,9 +1022,9 @@
       }
       var rx = d.r ? d.r.x : L.ox, ry = d.r ? d.r.y : L.oy;
       /* ห่วงหมุนควงตอนลอย */
-      if (!a.spr('ring', null, rx, ry, a.mn * .1 / RING, { rot: d.r ? Math.sin(a.now * 9) * .35 : 0 })) {
-        g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .014;
-        g.beginPath(); g.ellipse(rx, ry, a.mn * .045, a.mn * .020, 0, 0, 6.29); g.stroke();
+      if (!a.spr('ring', null, rx, ry, a.mn * .15 / RING, { rot: d.r ? Math.sin(a.now * 9) * .35 : 0 })) {   /* ห่วง 1.5 เท่า */
+        g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .02;
+        g.beginPath(); g.ellipse(rx, ry, a.mn * .0675, a.mn * .03, 0, 0, 6.29); g.stroke();
       }
       a.text(a.txt({ th: 'เหลือ ' + d.left + ' ห่วง  ' + d.msg, en: d.left + ' rings left  ' + d.msg }),
         a.W / 2, a.H - a.mn * .04, a.mn * .04, '#fff');

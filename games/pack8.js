@@ -135,7 +135,7 @@
       if (d.st === 'look') {
         d.items.forEach(function (o) { a.spr(o.e.k, o.e.e, o.x, o.y, d.size * 1.2); });
         a.head(a.txt({ th: 'นับให้ทัน', en: 'Count these' }));
-        a.spr(d.target.k, d.target.e, a.W / 2, a.mn * .075, a.mn * .06);
+        a.spr(d.target.k, d.target.e, a.W / 2, a.mn * .075, a.mn * .09);
         a.text(Math.ceil(Math.max(0, d.t)) + '', a.W / 2, a.H - a.mn * .08, a.mn * .07, a.C.accent);
       } else {
         a.text(a.txt({ th: 'มีกี่ชิ้น?', en: 'How many?' }), a.W / 2, a.mn * .18, a.mn * .06, '#fff');
@@ -159,14 +159,22 @@
     var pool = [{ k: 'i1', e: '🍎' }, { k: 'i2', e: '⭐' }, { k: 'i3', e: '🐟' }, { k: 'i7', e: '🍩' }, { k: 'i4', e: '🌸' }, { k: 'i5', e: '🚗' }];
     a.shuffle(pool);
     d.target = pool[0];
-    d.size = a.mn * .07;
-    d.count = a.rndi(4, Math.min(16, 6 + d.lv));
-    var total = d.count + a.rndi(6, 10 + d.lv * 2);
+    /* ไอคอน 2 เท่า วางแบบตารางสุ่มให้ไม่ทับกัน (นับได้ชัด) จำนวนรวมไม่เกินช่องที่มี */
+    d.size = a.mn * .14;
+    var top = a.mn * .18, bot = a.H - a.mn * .12, aw = a.W - a.mn * .04, ah = bot - top;
+    var cell = d.size * 1.25, cols = Math.max(2, Math.floor(aw / cell)), rows = Math.max(2, Math.floor(ah / cell));
+    var cells = cols * rows;
+    d.count = a.rndi(4, Math.min(16, 6 + d.lv, cells - 4));
+    var total = Math.min(cells, d.count + a.rndi(6, 10 + d.lv * 2));
+    var idx = []; for (var c = 0; c < cells; c++) idx.push(c);
+    a.shuffle(idx);
+    var cw = aw / cols, chh = ah / rows, jx = Math.max(0, (cw - d.size * 1.2) / 2), jy = Math.max(0, (chh - d.size * 1.2) / 2);
     d.items = [];
     for (var i = 0; i < total; i++) {
+      var ci = idx[i];
       d.items.push({
         e: i < d.count ? d.target : pool[1 + (i % 5)],
-        x: a.rnd(d.size, a.W - d.size), y: a.rnd(a.mn * .18, a.H - a.mn * .12)
+        x: a.mn * .02 + (ci % cols + .5) * cw + a.rnd(-jx, jx), y: top + (Math.floor(ci / cols) + .5) * chh + a.rnd(-jy, jy)
       });
     }
     a.shuffle(d.items);

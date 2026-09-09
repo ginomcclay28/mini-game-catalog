@@ -722,7 +722,7 @@
   R('pinata', {
     setup: function (a) {
       a.data.LO = { cx: a.W / 2, cy: a.H * .42, r: Math.min(a.W * .18, a.mn * .17) };
-      a.data.hp = 1; a.data.sw = 0; a.data.hit = 0; a.data.loot = []; a.data.done = 0; a.data.bat = null; a.data.time = 0; a.data.doneT = 0;
+      a.data.hp = 1; a.data.sw = 0; a.data.hit = 0; a.data.loot = []; a.data.done = 0; a.data.bat = null; a.data.time = 0; a.data.doneT = 0; a.data.kx = 0; a.data.ky = 0;
       a.data.LOOT = [{ k: 'candy', e: '🍬' }, { k: 'candy', e: '🍭' }, { k: 'gift', e: '🎁' }, { k: 'coin', e: '🥇' }, { k: 'star', e: '⭐' }, { k: 'gem', e: '💎' }];
     },
     update: function (dt, a) {
@@ -734,14 +734,18 @@
       d.loot.forEach(function (o) { o.vy += a.mn * 1.6 * dt; o.x += o.vx * dt; o.y += o.vy * dt; o.r += dt * 4; });
       d.loot = d.loot.filter(function (o) { return o.y < a.H + a.mn * .1; });
       if (d.bat && (d.bat.t -= dt) <= 0) d.bat = null;
+      d.kx *= Math.pow(.02, dt); d.ky *= Math.pow(.02, dt);   /* แรงกระแทกดันปิญาต้าไปตามทิศไม้ แล้วคืนตัว */
     },
     down: function (x, y, a) {
       var d = a.data, L = d.LO;
       var px = L.cx + Math.sin(d.sw) * a.mn * .12;
       if (d.done) return;
-      d.bat = { x: x, y: y, t: .18 };
+      /* ไม้เหวี่ยงเข้าหาจุดที่แตะ: สุ่มทิศที่ไม้มาจาก (ซ้าย/ขวา/บน/ล่าง เฉียง ๆ) จุดหมุนอยู่ที่ปลายด้าม */
+      var from = a.rnd(0, 6.2832);
+      d.bat = { x: x, y: y, from: from, t: .28, dur: .28 };
       if (Math.hypot(x - px, y - L.cy) < L.r * 1.2) {
         d.hp -= .035; d.hit = .12; a.add(5); a.beep(a.rnd(300, 500), .05, 'square');
+        d.kx -= Math.cos(from) * a.mn * .05; d.ky -= Math.sin(from) * a.mn * .05;
         a.shake(.008, .1);
         a.puff(x, y, { n: 6, col: a.pick(['#ff2e88', '#ffd23f', '#00d4ff', '#2fe08a']), spread: 6.28, spd: a.mn * .4, size: a.mn * .008, life: .4 });
         if (d.hp <= 0) {
@@ -756,21 +760,34 @@
     draw: function (g, a) {
       a.bg('#4a0f5e', '#ff6a3d');
       var d = a.data, L = d.LO;
-      var px = L.cx + Math.sin(d.sw) * a.mn * .12;
+      var px = L.cx + Math.sin(d.sw) * a.mn * .12 + d.kx, pyk = L.cy + d.ky;
       /* เชือกผูกที่ห่วงบนหลังปิญาต้า (ตำแหน่งวัดจากภาพ: +.113, -.272 ของขนาดภาพ) หมุนตามตัว */
       var prot = Math.sin(d.sw) * .16 + (d.hit > 0 ? a.rnd(-.08, .08) : 0), ps = L.r * 2.4;
       var lx = a.hasSpr('pinata') ? .113 * ps : 0, ly = a.hasSpr('pinata') ? -.272 * ps : -L.r;
-      var rx = px + lx * Math.cos(prot) - ly * Math.sin(prot), ry = L.cy + lx * Math.sin(prot) + ly * Math.cos(prot);
+      var rx = px + lx * Math.cos(prot) - ly * Math.sin(prot), ry = pyk + lx * Math.sin(prot) + ly * Math.cos(prot);
       if (!d.done) { g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 3; g.beginPath(); g.moveTo(L.cx, 0); g.lineTo(rx, ry); g.stroke(); }
       if (!d.done) {
-        g.save(); g.translate(px, L.cy); g.rotate(prot);
+        g.save(); g.translate(px, pyk); g.rotate(prot);
         a.spr('pinata', '🎊', 0, 0, L.r * 2.4); g.restore();
         var bw = Math.min(a.W * .55, a.mn * .5), bx = (a.W - bw) / 2, by = a.H - a.mn * .13;
         a.fillRR(bx, by, bw, a.mn * .04, a.mn * .02, 'rgba(0,0,0,.4)');
         a.fillRR(bx, by, bw * Math.max(0, d.hp), a.mn * .04, a.mn * .02, a.C.bad);
       }
       d.loot.forEach(function (o) { a.spr(o.k, o.e, o.x, o.y, a.mn * .07, { rot: o.r }); });
-      if (d.bat) a.spr('bat', null, d.bat.x + a.mn * .05, d.bat.y + a.mn * .05, a.mn * .3, { rot: -(.18 - d.bat.t) / .18 * 1.1 });
+      /* ไม้ตี: หมุนรอบปลายด้าม (มุมล่างขวาของภาพ) กวาดจากทิศ from เข้าหาจุดกระทบแล้วเลยไปนิด */
+      if (d.bat) {
+        var B = d.bat, u = 1 - B.t / B.dur, hs = a.mn * .34, bi = a.sprImg('bat'), asp = bi ? bi.width / bi.height : 1, bw = hs * asp;
+        var blen = .92 * Math.sqrt(bw * bw + hs * hs), pd = blen * .85;       /* ความยาวไม้ (แนวทแยงของภาพ) จุดหมุนห่างจุดกระทบ 85% ของไม้ */
+        var Px = B.x + Math.cos(B.from) * pd, Py = B.y + Math.sin(B.from) * pd;
+        var ease = u < .55 ? (u / .55) * (u / .55) : 1 + (u - .55) * .5;
+        var tipAng = B.from + Math.PI + (-1.1 + 1.35 * ease);        /* ทิศจากจุดหมุนไปปลายไม้ */
+        var r = tipAng + 3 * Math.PI / 4;                            /* ภาพ: ปลายไม้ชี้ไปมุมบนซ้าย (-135°) */
+        var cxb = Px + (-.4 * bw) * Math.cos(r) - (-.4 * hs) * Math.sin(r), cyb = Py + (-.4 * bw) * Math.sin(r) + (-.4 * hs) * Math.cos(r);
+        /* รอยเหวี่ยง */
+        g.save(); g.strokeStyle = 'rgba(255,255,255,' + (.5 * (1 - u)) + ')'; g.lineWidth = a.mn * .012; g.lineCap = 'round';
+        g.beginPath(); g.arc(Px, Py, pd, tipAng - .5, tipAng); g.stroke(); g.restore();
+        if (!a.spr('bat', null, cxb, cyb, hs, { rot: r })) { g.save(); g.translate(Px, Py); g.rotate(tipAng); a.fillRR(0, -a.mn * .012, hs * .8, a.mn * .024, a.mn * .012, '#8a5a2b'); g.restore(); }
+      }
       a.text(a.txt({ th: d.time.toFixed(1) + ' วิ', en: d.time.toFixed(1) + ' s' }), a.W - a.mn * .08, a.mn * .16, a.mn * .045, 'rgba(255,255,255,.85)');
       a.head(d.done ? a.txt({ th: 'แตกแล้ว! ของรางวัลกระจายเต็มจอ', en: 'Smashed! Prizes everywhere' })
         : a.txt({ th: 'แตะรัว ๆ ให้ปิญาต้าแตก', en: 'Tap fast to break the piñata' }));

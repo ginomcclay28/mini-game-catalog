@@ -432,33 +432,48 @@ window.MiniGame = (function () {
     g.clearRect(0, 0, W, H); api.bg();
   }
 
-  /* ============ อินพุต ============ */
-  function pt(e) {
+  /* ============ อินพุต ============
+     รองรับมัลติทัช: ทุกนิ้วที่แตะ/ลาก/ปล่อย ส่งเข้า def.down/move/up แยกกันทีละนิ้ว
+     (เกม 2 คนบนจอเดียว ต้องให้ทั้งสองฝั่งกดพร้อมกันได้)  api.pointer = นิ้วล่าสุด */
+  function toXY(src) {
     var r = cv.getBoundingClientRect();
-    var src = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
     return { x: (src.clientX - r.left) * W / r.width, y: (src.clientY - r.top) * H / r.height };
   }
+  var touchN = 0;
   function bindPointer() {
+    function each(e, fn) {
+      if (e.changedTouches) { for (var i = 0; i < e.changedTouches.length; i++) fn(toXY(e.changedTouches[i])); }
+      else fn(toXY(e));
+    }
     function down(e) {
       if (!running) return; e.preventDefault();
-      var p = pt(e); api.pointer.x = p.x; api.pointer.y = p.y; api.pointer.down = true;
-      if (def.down) def.down(p.x, p.y, api);
+      if (e.touches) touchN = e.touches.length;
+      each(e, function (p) {
+        api.pointer.x = p.x; api.pointer.y = p.y; api.pointer.down = true;
+        if (def.down) def.down(p.x, p.y, api);
+      });
     }
     function move(e) {
       if (!running) return; e.preventDefault();
-      var p = pt(e); api.pointer.x = p.x; api.pointer.y = p.y;
-      if (def.move) def.move(p.x, p.y, api);
+      each(e, function (p) {
+        api.pointer.x = p.x; api.pointer.y = p.y;
+        if (def.move) def.move(p.x, p.y, api);
+      });
     }
     function up(e) {
       if (!running) return; e.preventDefault();
-      var p = pt(e); api.pointer.down = false;
-      if (def.up) def.up(p.x, p.y, api);
+      if (e.touches) touchN = e.touches.length; else touchN = 0;
+      each(e, function (p) {
+        api.pointer.down = touchN > 0;           /* ยังมีนิ้วอื่นค้างอยู่ = ยังถือว่ากดอยู่ */
+        if (def.up) def.up(p.x, p.y, api);
+      });
     }
     cv.addEventListener('mousedown', down); cv.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
     cv.addEventListener('touchstart', down, { passive: false });
     cv.addEventListener('touchmove', move, { passive: false });
     cv.addEventListener('touchend', up, { passive: false });
+    cv.addEventListener('touchcancel', up, { passive: false });
     window.addEventListener('keydown', function (e) {
       if (running && def.key) def.key(e.key, api);
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].indexOf(e.key) >= 0) e.preventDefault();
