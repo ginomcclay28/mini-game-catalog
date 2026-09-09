@@ -663,6 +663,11 @@
           if (segHit(b, L.br, f.px, f.py, tip.x, tip.y, .35, boost) && boost) a.beep(520, .05);
         }
       }
+      /* ประตูทางเดียวปากราง: ลูกขึ้นผ่านได้ แต่ตกกลับลงรางไม่ได้ */
+      var gateY = L.topY + L.pw * .16;
+      if (b.x > L.innerR && b.x < L.laneR + L.br && b.vy > 0 && b.y > gateY - L.br * 1.5 && b.y < gateY + L.br) {
+        b.y = gateY - L.br * 1.5; b.vy = -Math.abs(b.vy) * .35; b.vx -= a.mn * .25; a.beep(300, .04);
+      }
       /* ลูกไหลกลับลงรางปล่อย = ส่งกลับให้ยิงใหม่ ไม่เสียลูก */
       if (b.y > L.botY - L.br * 1.6 && b.x > L.innerR) { serveBall(a); return; }
       /* ลูกตกช่องกลางระหว่างแป้นตี */
@@ -711,7 +716,8 @@
 
       /* เป้าล้ม */
       d.targ.forEach(function (o) {
-        if (!a.spr('target', null, o.x, o.y, L.pw * .075, { sx: o.w / (L.pw * .075), alpha: o.on ? 1 : .28 }))
+        var tim = a.sprImg('target'), tasp = tim ? tim.width / tim.height : 1;
+        if (!a.spr('target', null, o.x, o.y, L.pw * .075, { sx: o.w / (L.pw * .075 * tasp), alpha: o.on ? 1 : .28 }))
           a.fillRR(o.x - o.w / 2, o.y - L.pw * .022, o.w, L.pw * .044, L.pw * .012, o.on ? a.C.good : 'rgba(255,255,255,.14)');
       });
 
@@ -773,6 +779,11 @@
         }
       });
 
+      /* ประตูทางเดียวปากราง (บานพับเหลือง) */
+      var gY = L.topY + L.pw * .16, gOpen = (d.state === 'play' && b.x > L.innerR && b.vy < 0 && Math.abs(b.y - gY) < L.pw * .12) ? .9 : 0;
+      g.save(); g.translate(L.laneR - L.wt * .2, gY); g.rotate(-gOpen); g.strokeStyle = '#ffd23f'; g.lineWidth = L.wt * .45; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(0, 0); g.lineTo(-(L.laneR - L.innerR) * .9, 0); g.stroke(); g.restore();
+      a.circle(L.laneR - L.wt * .2, gY, L.wt * .35, '#ff4f8b');
       /* สปริงปล่อยลูก */
       var spx = L.laneCx, spTop = L.botY - L.br * 2.2 + d.chg * L.br * 1.6;
       g.strokeStyle = '#c9c9dd'; g.lineWidth = L.wt * .3;
