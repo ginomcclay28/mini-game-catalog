@@ -54,26 +54,32 @@
     });
   }
 
-  /* ---------- 52 หอคอยฮานอย ----------  DISC = สัดส่วนภาพจาน (วัดจากไฟล์) */
-  var DISC = 2.26;   /* จานสี d1-d4 วัดจากไฟล์ */
+  /* ---------- 52 หอคอยฮานอย ----------
+     สัดส่วนยึดตามภาพปก (วัดจากไฟล์ 052.png): S = ความกว้างฉาก
+     เสาห่างกัน .30S หนา .035S สูง .40S  ฐานกว้าง .97S สูง .08S
+     จาน 4 ใบ กว้าง .16/.20/.25/.29S หนา .060/.068/.076/.084S  (DISC = สัดส่วนภาพจาน) */
+  var DISC = 2.26;
+  var HN = { gap: .30, pegW: .035, pegH: .40, baseW: .97, baseH: .08, dw: [.16, .20, .25, .29], dh: [.060, .068, .076, .084] };
+  function hnX(a, p) { return a.W / 2 + (p - 1) * HN.gap * a.data.LO.S; }
+  function hnDiscW(a, disc) { return HN.dw[disc - 1] * a.data.LO.S; }
+  function hnDiscH(a, disc) { return HN.dh[disc - 1] * a.data.LO.S; }
   R('hanoi', {
     setup: function (a) {
       var N = 4;
       a.data.N = N; a.data.pegs = [[4, 3, 2, 1], [], []]; a.data.sel = -1; a.data.mv = 0;
-      a.data.LO = {
-        pw: a.W / 3, base: a.H * .74, ph: Math.min(a.mn * .42, a.H * .32),
-        dh: a.mn * .075, unit: Math.min(a.W / 3 * .22, a.mn * .075)
-      };
+      var S = Math.min(a.W, a.H * 1.5);   /* ความกว้างฉาก (แนวนอนจำกัดด้วยความสูงจอ) */
+      a.data.LO = { S: S, base: a.H * (a.port ? .70 : .78), ph: HN.pegH * S };
     },
     down: function (x, y, a) {
-      var d = a.data, L = d.LO, p = Math.max(0, Math.min(2, Math.floor(x / L.pw)));
+      var d = a.data, L = d.LO;
+      var p = Math.max(0, Math.min(2, Math.round((x - a.W / 2) / (HN.gap * L.S)) + 1));
       if (d.sel < 0) { if (d.pegs[p].length) { d.sel = p; a.beep(600, .06); } return; }
       if (d.sel === p) { d.sel = -1; return; }
       var from = d.pegs[d.sel], to = d.pegs[p];
       var disc = from[from.length - 1];
       if (!to.length || to[to.length - 1] > disc) {
         from.pop(); to.push(disc); d.mv++; a.beep(760, .07); d.sel = -1; a.shake(.005, .1);
-        a.puff(L.pw * (p + .5), L.base - to.length * L.dh, { n: 6, col: '#ffffff', spread: 3.14, spd: L.dh * 3, size: L.dh * .12, life: .35 });
+        a.puff(hnX(a, p), L.base - to.length * hnDiscH(a, 3), { n: 6, col: '#ffffff', spread: 3.14, spd: L.S * .2, size: L.S * .008, life: .35 });
         if (d.pegs[2].length === d.N) {
           a.flash('#ffd23f', .25); a.shake(.016, .35);
           a.setScore(Math.max(50, 400 - d.mv * 10));
@@ -83,30 +89,30 @@
     },
     draw: function (g, a) {
       a.bg('#3a1a0a', '#c8761e');
-      var d = a.data, L = d.LO;
-      /* ฐานยาวชิ้นเดียวรองรับ 3 เสา (ภาพยืดตามความกว้าง) + เสาแยกชิ้น */
-      var bi = a.sprImg('base'), art2 = a.hasSpr('peg');
-      if (bi) { var bh = a.mn * .06, bwid = a.W * .92; g.drawImage(bi, (a.W - bwid) / 2, L.base - bh * .25, bwid, bh); }
+      var d = a.data, L = d.LO, S = L.S;
+      /* ฐานยาวชิ้นเดียว: ผิวบนอยู่ที่ L.base */
+      var bi = a.sprImg('base'), bw = HN.baseW * S, bh = HN.baseH * S;
+      if (bi) g.drawImage(bi, a.W / 2 - bw / 2, L.base - bh * .22, bw, bh);
+      else a.fillRR(a.W / 2 - bw / 2, L.base, bw, bh * .4, bh * .15, '#5a3a18');
       for (var p = 0; p < 3; p++) {
-        var cx = L.pw * (p + .5);
-        if (!bi) a.fillRR(cx - L.pw * .42, L.base, L.pw * .84, a.mn * .022, a.mn * .01, '#5a3a18');
-        if (!a.spr('peg', null, cx, L.base - L.ph / 2, L.ph * 1.04)) a.fillRR(cx - a.mn * .012, L.base - L.ph, a.mn * .024, L.ph, a.mn * .01, '#5a3a18');
-        if (d.sel === p) { g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .008; a.rr(cx - L.pw * .44, L.base - L.ph - a.mn * .03, L.pw * .88, L.ph + a.mn * .06, a.mn * .02); g.stroke(); }
-        var topY = -1;
+        var cx = hnX(a, p), pegW = HN.pegW * S, pi = a.sprImg('peg');
+        var pegH = pi ? pegW * pi.height / pi.width : L.ph;
+        if (!a.spr('peg', null, cx, L.base - pegH / 2 + pegW * .3, pegH)) a.fillRR(cx - pegW / 2, L.base - L.ph, pegW, L.ph, pegW / 2, '#5a3a18');
+        if (d.sel === p) { g.strokeStyle = a.C.accent; g.lineWidth = a.mn * .008; a.rr(cx - S * .16, L.base - pegH - a.mn * .03, S * .32, pegH + a.mn * .06, a.mn * .02); g.stroke(); }
+        var y = L.base, topY = -1;
         d.pegs[p].forEach(function (disc, i) {
-          var w = L.unit * (disc + 1.4), h = L.dh, col = 'hsl(' + (disc * 55 + 190) + ',75%,58%)';
-          var lift = (d.sel === p && i === d.pegs[p].length - 1) ? a.mn * .03 : 0;   // จานบนสุดที่เลือกยกขึ้น
-          var dy = L.base - (i + .5) * h - a.mn * .004 - lift;
-          /* จานสีตามภาพปก d1-d4 (ใหญ่->เล็ก) ยืดกว้างตามขนาด  ไม่มี = จานขาวย้อมสี */
-          var dh = h - a.mn * .006;
-          if (!a.spr('d' + disc, null, cx, dy, dh, { sx: w / (dh * DISC) }) && !a.sprTint('disc', col, null, cx, dy, dh, { sx: w / (dh * DISC) }))
-            a.fillRR(cx - w / 2, L.base - (i + 1) * h - a.mn * .004 - lift, w, dh, h * .3, col);
-          topY = dy - h * .10;   /* ระดับรูของจานบนสุด */
+          var w = hnDiscW(a, disc), h = hnDiscH(a, disc), col = 'hsl(' + (disc * 55 + 190) + ',75%,58%)';
+          var lift = (d.sel === p && i === d.pegs[p].length - 1) ? a.mn * .04 : 0;   // จานบนสุดที่เลือกยกขึ้น
+          var dy = y - h * .5 - lift;
+          if (!a.spr('d' + disc, null, cx, dy, h, { sx: w / (h * DISC) }))
+            a.fillRR(cx - w / 2, dy - h / 2, w, h, h * .3, col);
+          y -= h * .78;                       /* จานซ้อนกัน หน้าบนของใบล่างถูกใบบนบังบางส่วน */
+          topY = dy - h * .18;
         });
-        /* วาดเสาทับอีกรอบเฉพาะส่วนที่โผล่พ้นรูจานบนสุด ให้เห็นเสาลอดรู */
+        /* เสาโผล่ทะลุรูจานบนสุด */
         if (topY > 0) {
-          g.save(); g.beginPath(); g.rect(cx - a.mn * .03, L.base - L.ph - a.mn * .02, a.mn * .06, topY - (L.base - L.ph) + a.mn * .02); g.clip();
-          if (!a.spr('peg', null, cx, L.base - L.ph / 2, L.ph * 1.04)) a.fillRR(cx - a.mn * .012, L.base - L.ph, a.mn * .024, L.ph, a.mn * .01, '#5a3a18');
+          g.save(); g.beginPath(); g.rect(cx - pegW, L.base - pegH - a.mn * .02, pegW * 2, topY - (L.base - pegH) + a.mn * .02); g.clip();
+          if (!a.spr('peg', null, cx, L.base - pegH / 2 + pegW * .3, pegH)) a.fillRR(cx - pegW / 2, L.base - L.ph, pegW, L.ph, pegW / 2, '#5a3a18');
           g.restore();
         }
       }
