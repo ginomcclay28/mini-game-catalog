@@ -663,11 +663,11 @@
           if (segHit(b, L.br, f.px, f.py, tip.x, tip.y, .35, boost) && boost) a.beep(520, .05);
         }
       }
-      /* ประตูทางเดียวปากราง: ลูกขึ้นผ่านได้ แต่ตกกลับลงรางไม่ได้ */
-      var gateY = L.topY + L.pw * .16;
-      if (b.x > L.innerR && b.x < L.laneR + L.br && b.vy > 0 && b.y > gateY - L.br * 1.5 && b.y < gateY + L.br) {
-        b.y = gateY - L.br * 1.5; b.vy = -Math.abs(b.vy) * .35; b.vx -= a.mn * .25; a.beep(300, .04);
-      }
+      /* ลิ้นปิดปากราง: บานพับที่ผนังขวา ปิดทาบแนวเฉียงจากผนังขวาลงมาถึงยอดผนังใน (ต่อแนวโค้งบน)
+         ลูกที่พุ่งขึ้นในรางดันลิ้นเปิดผ่านได้  ลูกที่ไหลมาจากสนามจะโดนลิ้นกันไว้ ไม่ตกกลับลงราง */
+      var goingUp = b.x > L.innerR && b.vy < 0;
+      d.gateOpen = goingUp && b.y < L.archY + L.br * 2 && b.y > L.topY ? 1 : Math.max(0, (d.gateOpen || 0) - dt * 4);
+      if (!goingUp) segHit(b, L.br, L.laneR, L.topY + L.pw * .12, L.innerR, L.archY, .4, 0);
       /* ลูกไหลกลับลงรางปล่อย = ส่งกลับให้ยิงใหม่ ไม่เสียลูก */
       if (b.y > L.botY - L.br * 1.6 && b.x > L.innerR) { serveBall(a); return; }
       /* ลูกตกช่องกลางระหว่างแป้นตี */
@@ -779,11 +779,14 @@
         }
       });
 
-      /* ประตูทางเดียวปากราง (บานพับเหลือง) */
-      var gY = L.topY + L.pw * .16, gOpen = (d.state === 'play' && b.x > L.innerR && b.vy < 0 && Math.abs(b.y - gY) < L.pw * .12) ? .9 : 0;
-      g.save(); g.translate(L.laneR - L.wt * .2, gY); g.rotate(-gOpen); g.strokeStyle = '#ffd23f'; g.lineWidth = L.wt * .45; g.lineCap = 'round';
-      g.beginPath(); g.moveTo(0, 0); g.lineTo(-(L.laneR - L.innerR) * .9, 0); g.stroke(); g.restore();
-      a.circle(L.laneR - L.wt * .2, gY, L.wt * .35, '#ff4f8b');
+      /* ลิ้นปิดปากราง (บานพับที่ผนังขวา หมุนเปิดขึ้นตอนลูกพุ่งผ่าน) */
+      var hx = L.laneR, hy = L.topY + L.pw * .12, gx = L.innerR, gy = L.archY;
+      var gAng = Math.atan2(gy - hy, gx - hx) - (d.gateOpen || 0) * 1.1, gLen = Math.hypot(gx - hx, gy - hy);
+      g.save(); g.lineCap = 'round';
+      g.strokeStyle = '#ffd23f'; g.lineWidth = L.wt * .5;
+      g.beginPath(); g.moveTo(hx, hy); g.lineTo(hx + Math.cos(gAng) * gLen, hy + Math.sin(gAng) * gLen); g.stroke();
+      g.restore();
+      a.circle(hx, hy, L.wt * .4, '#ff4f8b');
       /* สปริงปล่อยลูก */
       var spx = L.laneCx, spTop = L.botY - L.br * 2.2 + d.chg * L.br * 1.6;
       g.strokeStyle = '#c9c9dd'; g.lineWidth = L.wt * .3;
