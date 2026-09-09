@@ -342,7 +342,7 @@
   }
 
   /* ---------- 76 ชั่งให้สมดุล ----------  ARM = สัดส่วนภาพคาน+ถาด กว้าง:สูง (วัดจากไฟล์) */
-  var ARM = 2.86, HUB = .145, PANX = .725, PANY = .88;   /* จุดหมุน = กลางดุมที่ .145 ของความสูงภาพ, ถาดอยู่ที่ ±.725 ของครึ่งความกว้าง */
+  var ARM = 2.86, HUB = .145, PANX = .725, PANY = .70;   /* PANY .70 = ลอยอยู่เหนือถาด (ขอบถาดเริ่ม ~.80) */   /* จุดหมุน = กลางดุมที่ .145 ของความสูงภาพ, ถาดอยู่ที่ ±.725 ของครึ่งความกว้าง */
   R('balancescale', {
     setup: function (a) { a.data.lv = 1; mkScale(a); a.data.fx = 0; a.data.msg = ''; },
     update: function (dt, a) {
@@ -394,7 +394,7 @@
           a.fillRR(px - a.mn * .09, a.mn * .08, a.mn * .18, a.mn * .022, a.mn * .01, '#d8d8e8');
         }
         var v = s < 0 ? d.target : d.right;
-        a.text(v + '', art ? px * PANX : px, art ? arm * 2 / ARM * (PANY - HUB) : a.mn * .04, a.mn * .05, art ? '#5a3a00' : '#fff');
+        a.text(v + '', art ? px * PANX : px, art ? arm * 2 / ARM * (PANY - HUB) : a.mn * .04, a.mn * .055, '#fff');
       });
       g.restore();
       for (var i = 0; i < d.w.length; i++) {

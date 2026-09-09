@@ -219,10 +219,10 @@
       }
       if (best >= 0) {
         var hit = d.t[best]; d.t.splice(best, 1); a.add(10);
-        /* เสียง โด เร มี ฟา ซอล ไล่ขึ้นทีละโน้ตทุกครั้งที่กดถูก แล้ววนใหม่ */
-        var NOTES = [523.25, 587.33, 659.25, 698.46, 783.99];
-        d.ni = ((d.ni || 0) + 1) % NOTES.length;
-        a.beep(NOTES[d.ni], .18, 'triangle');
+        /* เสียง โด เร มี ฟา ซอล ลา ที ไล่ขึ้น 3 ออกเทฟ (C4 -> B6 รวม 21 โน้ต) ทีละโน้ตทุกครั้งที่กดถูก แล้ววนใหม่ */
+        var SCALE = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
+        d.ni = ((d.ni === undefined ? -1 : d.ni) + 1) % 21;
+        a.beep(SCALE[d.ni % 7] * Math.pow(2, Math.floor(d.ni / 7)), .18, 'triangle');
         d.hitfx.push({ l: l, t: .3 });
         a.puff(l * L.lw + L.lw / 2, Math.min(a.H - a.mn * .1, hit.y + L.th / 2),
                { n: 8, col: ['#ff2e88', '#00d4ff', '#ffd23f', '#2fe08a'][l], spread: 2.4, spd: L.lw * 1.8, size: L.lw * .05, life: .4 });
