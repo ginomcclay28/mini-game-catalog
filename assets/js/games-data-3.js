@@ -370,10 +370,10 @@ window.GAMES = window.GAMES.concat([
   id: "giftpick2", icon: "🎁", cat: "luck", c1: "#12093a", c2: "#c81d6b", time: 0,
   devices: ["touch","kiosk","tablet","mobile"],
   th: { name: "เลือกกล่องของขวัญ v.2", tag: "กล่องหลากสีสลับที่ไปมา จับจังหวะแล้วเลือก",
-    how: ["กล่องของขวัญ 9 ใบ สีต่างกันทุกใบ","ทุก 2 วินาที กล่องจะสลับตำแหน่งกันเอง","จับจังหวะแล้วแตะกล่องที่ต้องการ","กล่องเปิดออกพร้อมประกาศรางวัล"],
+    how: ["กล่องของขวัญ 9 ใบ สีต่างกันทุกใบ","ทุก 1 วินาที กล่องจะสลับตำแหน่งกันเอง","จับจังหวะแล้วแตะกล่องที่ต้องการ","กล่องเปิดออกพร้อมประกาศรางวัล"],
     custom: ["สีกล่องทั้ง 9 ใบ","ภาพกล่องปิด/กล่องเปิด","รายการรางวัล","จังหวะการสลับที่","เปลี่ยนภาพพื้นหลัง"] },
   en: { name: "Gift Box Pick v.2", tag: "Colorful boxes keep swapping — time your pick",
-    how: ["Nine gift boxes, every one a different color","Every two seconds the boxes swap places","Watch the shuffle, then tap the one you want","It opens up and announces your prize"],
+    how: ["Nine gift boxes, every one a different color","Every second the boxes swap places","Watch the shuffle, then tap the one you want","It opens up and announces your prize"],
     custom: ["Color of all nine boxes","Closed / open box artwork","Prize list","Shuffle timing","Background image"] }
 },
 {
@@ -395,5 +395,65 @@ window.GAMES = window.GAMES.concat([
   en: { name: "Gift Box Pick v.4", tag: "Boxes tumble down, each swaying and shaking its own way",
     how: ["Colorful gift boxes drop in from the top","Each one sways and shakes by a different amount","Some fall slowly, others come down fast","Tap the box you want to open it"],
     custom: ["Box colors and sizes","Fall speed and sway","Prize list","Background image"] }
+},
+{
+  id: "starpick", icon: "✨", cat: "luck", c1: "#101a5a", c2: "#b06bff", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "สอยดาว", tag: "ดาวลอยผ่านจอ แตะสอยดวงที่ถูกใจ",
+    how: ["ดาวหลายขนาดกระพริบอยู่เต็มท้องฟ้า","ดวงเล็กอยู่ไกลจึงลอยช้า ดวงใหญ่อยู่ใกล้จึงลอยเร็ว","แตะสอยดาวดวงที่ต้องการ","ดาวพุ่งเข้ากลางจอแล้วเปิดเป็นรางวัล"],
+    custom: ["สีและขนาดของดาว","ความเร็วการลอย","จังหวะกระพริบ","รายการรางวัล","เปลี่ยนภาพพื้นหลังอวกาศ"] },
+  en: { name: "Star Catch", tag: "Stars drift past — tap the one you like",
+    how: ["Stars of every size twinkle across the sky","Small ones sit far away and drift slowly; big ones are close and move fast","Tap the star you want to claim","It flies to the centre and opens into your prize"],
+    custom: ["Star colors and sizes","Drift speed","Twinkle rhythm","Prize list","Space background image"] }
+},
+{
+  id: "ticketblower", icon: "🎟️", cat: "luck", c1: "#1b1040", c2: "#ff7a3d", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "ตู้เป่าตั๋วชิงโชค", tag: "กดปุ่มให้ตั๋วปลิว แล้วล้วงมือคว้าออกมา 1 ใบ",
+    how: ["ท่ออคริลิคใสใส่ตั๋วชิงโชคไว้เต็ม","กดปุ่มสีส้มที่ฐาน พัดลมจะเป่าตั๋วปลิวว่อน","แตะที่ช่องกลม มือจะล้วงเข้าไปคว้าตั๋ว","ตั๋วลอยออกมาพลิกเปิดให้เห็นรางวัล"],
+    custom: ["ลายตั๋วและสีหัวตั๋ว","รายการรางวัล","สีตู้และปุ่ม","แรงลมและจำนวนตั๋ว","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "Ticket Blower", tag: "Blow the tickets, then reach in and grab one",
+    how: ["A clear acrylic tube packed full of raffle tickets","Hit the orange button and the fan sends them flying","Tap the round port — a hand reaches in and grabs one","The ticket floats out and flips open to reveal your prize"],
+    custom: ["Ticket artwork and colors","Prize list","Cabinet and button colors","Fan strength and ticket count","Background image"] }
+},
+{
+  id: "ballblower", icon: "🏓", cat: "luck", c1: "#102040", c2: "#00b6ff", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "ตู้เป่าลูกบอลชิงโชค", tag: "กดปุ่มให้ลูกบอลเด้ง แล้วล้วงมือคว้าออกมา 1 ลูก",
+    how: ["ท่ออคริลิคใสใส่ลูกปิงปองหลากสีพร้อมหมายเลข","กดปุ่มที่ฐาน พัดลมจะเป่าลูกบอลเด้งชนกันทั่วท่อ","แตะที่ช่องกลม มือจะล้วงเข้าไปคว้าลูกบอล","ลูกที่ได้ลอยออกมาพร้อมประกาศรางวัล"],
+    custom: ["สีลูกบอลและหมายเลข","รายการรางวัล","สีตู้และปุ่ม","แรงลมและจำนวนลูก","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "Lottery Ball Blower", tag: "Blow the balls, then reach in and grab one",
+    how: ["A clear tube filled with numbered ping-pong balls","Hit the button and the fan sends them bouncing around","Tap the round port — a hand reaches in and grabs one","The ball floats out and announces your prize"],
+    custom: ["Ball colors and numbers","Prize list","Cabinet and button colors","Fan strength and ball count","Background image"] }
+},
+{
+  id: "lotto3", icon: "🔢", cat: "luck", c1: "#131a46", c2: "#ffd23f", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "สลาก 3 หลัก", tag: "หมุนโหลแก้วทีละใบ ได้เลขใบละตัว รวมเป็น 3 หลัก",
+    how: ["โหลแก้ว 3 ใบ แต่ละใบใส่ลูกปิงปองเลข 0-9","หมุนที่บิดของโหลแรก ลูกบอลจะไหลลงถาด 1 ลูก","หมุนให้ครบทั้ง 3 โหล จะได้เลข 3 หลัก","เลขตอง เลขเรียง หรือเลขเบิ้ล ได้รางวัลต่างกัน"],
+    custom: ["สีฝาโหลและที่บิด","ชุดตัวเลขบนลูกบอล","เงื่อนไขและรายการรางวัล","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "3-Digit Draw", tag: "Crank each jar for one digit — three jars, one number",
+    how: ["Three glass jars, each holding balls numbered 0-9","Turn the first jar's crank and a ball rolls into the tray","Crank all three jars to complete your 3-digit number","Triples, straights and pairs each win a different prize"],
+    custom: ["Jar lid and crank colors","Numbers on the balls","Winning rules and prize list","Background image"] }
+},
+{
+  id: "cardpack", icon: "🃏", cat: "luck", c1: "#161038", c2: "#ffc93c", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "เปิดซองการ์ด", tag: "เลือกซอง ฉีกเปิด ลุ้นการ์ดหายาก",
+    how: ["เลือกซองการ์ด 1 ซองจากทั้งหมด 10 ซอง","ซองจะขยายขึ้นกลางจอ","ลากนิ้วตัดตามรอยประด้านบนเพื่อฉีกซอง","การ์ดในซองจะพลิกเปิด ลุ้นการ์ดทองรางวัลพิเศษ"],
+    custom: ["สีและลายซองทั้ง 10 ซอง","ภาพบนการ์ดแต่ละระดับ","อัตราการออกรางวัล","รายการรางวัล","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "Card Pack Opening", tag: "Pick a pack, tear it open, chase the rare card",
+    how: ["Choose one of ten foil card packs","Your pack zooms up to the centre of the screen","Drag along the dashed line to tear the top off","The card inside flips over — hope for the gold rare"],
+    custom: ["Colors and pattern of all ten packs","Artwork for each card tier","Drop rates","Prize list","Background image"] }
+},
+{
+  id: "gifttree", icon: "🌳", cat: "luck", c1: "#2a8a3f", c2: "#ffd23f", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "ต้นไม้ของขวัญ", tag: "กล่องของขวัญแขวนใต้กิ่ง แกว่งตามลม แตะเลือก 1 กล่อง",
+    how: ["ต้นไม้ใหญ่มีกล่องของขวัญห้อยอยู่ใต้กิ่ง 7 จุด","ใบไม้ไหวและกล่องแกว่งไปมาตามลม","แต่ละกล่องอยู่แค่ 1-4 วินาที แล้วถูกดึงกลับขึ้นไป","มีกล่องใหม่หย่อนลงมาแทนเรื่อย ๆ แตะให้ทันเพื่อเปิดรางวัล"],
+    custom: ["สีกล่องของขวัญ","ทรงพุ่มและเฉดสีใบไม้","ความแรงลมและจังหวะสลับกล่อง","รายการรางวัล","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "Gift Tree", tag: "Gifts dangle from the branches, swaying in the breeze",
+    how: ["A big tree with gift boxes hanging from seven spots","Leaves rustle and the boxes swing in the wind","Each gift stays for only 1-4 seconds before being pulled back up","A fresh one drops down in its place — tap fast to claim a prize"],
+    custom: ["Gift box colors","Canopy shape and leaf shades","Wind strength and swap timing","Prize list","Background image"] }
 }
 ]);

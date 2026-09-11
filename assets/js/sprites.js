@@ -757,21 +757,55 @@ window.GAME_SPRITES = {
   },
 
   /* ---------- 102-104 เลือกกล่องของขวัญ v.2 / v.3 / v.4 ----------
-     กล่องวาดด้วยโค้ดและย้อมสีเองได้อยู่แล้ว ถ้าจะใส่ภาพ ให้วาดกล่องเป็น "สีขาว/เทา"
-     เกมจะย้อมสีประจำใบให้เอง (ไม่ใส่ก็ได้ ทั้ง 3 เกมเล่นได้ปกติ) */
+     ใช้ภาพกล่อง (และพื้นหลัง) ร่วมกับเกม 29 เลย  '../giftpick/' = ชี้ไปโฟลเดอร์ของเกม 29
+     เกมจะหมุนเฉดสีให้กล่องแต่ละใบเป็นคนละสีเอง ไม่ต้องทำภาพเพิ่ม
+     ถ้าอยากใช้ภาพชุดใหม่ ก็เปลี่ยนเป็นชื่อไฟล์ธรรมดา แล้ววางไฟล์ในโฟลเดอร์ของเกมนั้น */
   giftpick2: {
-    box:     'box.png',        // กล่องปิด สีขาว/เทา
-    boxOpen: 'box-open.png',   // กล่องเปิดฝาลอย
-    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+    box:     '../giftpick/box.png',        // กล่องปิด
+    boxOpen: '../giftpick/box-open.png',   // กล่องเปิดฝาลอย
+    bg: '../giftpick/bg.jpg', bgPort: '../giftpick/bg-port.jpg'
   },
   giftpick3: {
-    box:     'box.png',
-    boxOpen: 'box-open.png',
-    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+    box:     '../giftpick/box.png',
+    boxOpen: '../giftpick/box-open.png',
+    bg: '../giftpick/bg.jpg', bgPort: '../giftpick/bg-port.jpg'
   },
   giftpick4: {
-    box:     'box.png',
-    boxOpen: 'box-open.png',
+    box:     '../giftpick/box.png',
+    boxOpen: '../giftpick/box-open.png',
+    bg: '../giftpick/bg.jpg', bgPort: '../giftpick/bg-port.jpg'
+  },
+
+  /* ---------- 105 สอยดาว ----------
+     ดาววาดด้วยโค้ด (กระพริบ/หลายขนาด/หลายสี) ใช้ภาพอวกาศร่วมกับเกม 64 */
+  starpick: {
+    bg: '../spacewar/bg.jpg', bgPort: '../spacewar/bg-port.jpg'
+  },
+
+  /* ---------- 106 ตู้เป่าตั๋วชิงโชค ----------
+     ตู้ ตั๋ว พัดลม และมือ วาดด้วยโค้ดทั้งหมด ใส่แค่ภาพพื้นหลังก็พอ */
+  ticketblower: {
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 107 ตู้เป่าลูกบอลชิงโชค ---------- */
+  ballblower: {
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 108 สลาก 3 หลัก (โหลแก้ว 3 ใบ) ---------- */
+  lotto3: {
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 109 เปิดซองการ์ด ---------- */
+  cardpack: {
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 110 ต้นไม้ของขวัญ ----------
+     ต้นไม้ ใบ และกล่อง วาดด้วยโค้ดทั้งหมด ใส่แค่ภาพพื้นหลังก็พอ */
+  gifttree: {
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   }
 
