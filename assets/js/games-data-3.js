@@ -365,5 +365,35 @@ window.GAMES = window.GAMES.concat([
   en: { name: "Scratch Card v.2", tag: "Pick one of nine cards, then scratch to win",
     how: ["Start on a panel of nine scratch cards","Tap the one you like — it zooms up to the centre","Scratch 55% of the foil and the prize reveals itself","Tap again to go back and pick another; all nine used starts a fresh panel"],
     custom: ["Colors and pattern of all nine cards","Foil artwork (brand pattern)","Prize list","Logo on the card","Background image"] }
+},
+{
+  id: "giftpick2", icon: "🎁", cat: "luck", c1: "#12093a", c2: "#c81d6b", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "เลือกกล่องของขวัญ v.2", tag: "กล่องหลากสีสลับที่ไปมา จับจังหวะแล้วเลือก",
+    how: ["กล่องของขวัญ 9 ใบ สีต่างกันทุกใบ","ทุก 2 วินาที กล่องจะสลับตำแหน่งกันเอง","จับจังหวะแล้วแตะกล่องที่ต้องการ","กล่องเปิดออกพร้อมประกาศรางวัล"],
+    custom: ["สีกล่องทั้ง 9 ใบ","ภาพกล่องปิด/กล่องเปิด","รายการรางวัล","จังหวะการสลับที่","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "Gift Box Pick v.2", tag: "Colorful boxes keep swapping — time your pick",
+    how: ["Nine gift boxes, every one a different color","Every two seconds the boxes swap places","Watch the shuffle, then tap the one you want","It opens up and announces your prize"],
+    custom: ["Color of all nine boxes","Closed / open box artwork","Prize list","Shuffle timing","Background image"] }
+},
+{
+  id: "giftpick3", icon: "📦", cat: "luck", c1: "#1a1040", c2: "#7b2ff7", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "เลือกกล่องของขวัญ v.3", tag: "กล่องไหลมาบนสายพาน แตะคว้าใบที่ถูกใจ",
+    how: ["กล่องของขวัญไหลผ่านหน้าจอบนสายพาน","แต่ละใบสีและขนาดไม่เท่ากัน","แตะกล่องที่ชอบก่อนจะไหลพ้นจอ","กล่องเปิดออกพร้อมประกาศรางวัล"],
+    custom: ["สีและขนาดกล่อง","ลายสายพาน","ความเร็วสายพาน","รายการรางวัล","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "Gift Box Pick v.3", tag: "Boxes ride a conveyor — grab the one you like",
+    how: ["Gift boxes roll across the screen on a conveyor belt","Each one is a different color and size","Tap the box you want before it rolls off","It opens up and announces your prize"],
+    custom: ["Box colors and sizes","Conveyor belt styling","Belt speed","Prize list","Background image"] }
+},
+{
+  id: "giftpick4", icon: "🎉", cat: "luck", c1: "#0e0b33", c2: "#ff2e88", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "เลือกกล่องของขวัญ v.4", tag: "กล่องร่วงลงมา แกว่งและสั่นไม่เหมือนกัน",
+    how: ["กล่องของขวัญหลากสีร่วงลงมาจากด้านบน","แต่ละใบแกว่งซ้ายขวาและสั่นไม่เท่ากัน","บางใบตกช้า บางใบตกเร็ว","แตะกล่องที่ต้องการเพื่อเปิดดูรางวัล"],
+    custom: ["สีและขนาดกล่อง","ความเร็วและระยะแกว่ง","รายการรางวัล","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "Gift Box Pick v.4", tag: "Boxes tumble down, each swaying and shaking its own way",
+    how: ["Colorful gift boxes drop in from the top","Each one sways and shakes by a different amount","Some fall slowly, others come down fast","Tap the box you want to open it"],
+    custom: ["Box colors and sizes","Fall speed and sway","Prize list","Background image"] }
 }
 ]);

@@ -754,6 +754,25 @@ window.GAME_SPRITES = {
     glow: 'glow.png',   // แสงทองหลังรางวัล (ไม่ใส่ก็ได้ เกมคลิปไม่ให้ล้นบัตรอยู่แล้ว)
     gift: 'gift.png',   // กล่องของขวัญเหนือข้อความรางวัล (ไม่ใส่ก็ได้)
     bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+
+  /* ---------- 102-104 เลือกกล่องของขวัญ v.2 / v.3 / v.4 ----------
+     กล่องวาดด้วยโค้ดและย้อมสีเองได้อยู่แล้ว ถ้าจะใส่ภาพ ให้วาดกล่องเป็น "สีขาว/เทา"
+     เกมจะย้อมสีประจำใบให้เอง (ไม่ใส่ก็ได้ ทั้ง 3 เกมเล่นได้ปกติ) */
+  giftpick2: {
+    box:     'box.png',        // กล่องปิด สีขาว/เทา
+    boxOpen: 'box-open.png',   // กล่องเปิดฝาลอย
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+  giftpick3: {
+    box:     'box.png',
+    boxOpen: 'box-open.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
+  },
+  giftpick4: {
+    box:     'box.png',
+    boxOpen: 'box-open.png',
+    bg: 'bg.jpg', bgPort: 'bg-port.jpg'
   }
 
 };

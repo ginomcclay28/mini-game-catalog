@@ -1,6 +1,9 @@
 /* ============================================================
    PACK 11 — เกมที่ 101 ขึ้นไป
-   101 บัตรขูด v.2 : เลือกบัตรจากแผง 3x3 → บัตรขยายขึ้นกลางจอ → ขูดเปิดรางวัล
+   101 บัตรขูด v.2   : เลือกบัตรจากแผง 3x3 → บัตรขยายขึ้นกลางจอ → ขูดเปิดรางวัล
+   102 กล่องของขวัญ v.2 : แผง 3x3 กล่องหลากสี สลับตำแหน่งกันทุก 2 วินาที
+   103 กล่องของขวัญ v.3 : กล่องหลายสีหลายขนาดไหลมาบนสายพาน
+   104 กล่องของขวัญ v.4 : กล่องหลากสีร่วงลงมา แกว่งและสั่นไม่เท่ากัน
    ============================================================ */
 (function () {
   var R = MiniGame.register;
@@ -260,4 +263,425 @@
       }
     }
   });
+
+
+  /* ============================================================
+     102-104 กล่องของขวัญ v.2 / v.3 / v.4  — ส่วนที่ใช้ร่วมกัน
+     ============================================================ */
+
+  /* สีกล่อง: [ตัวกล่องเข้ม, ตัวกล่องอ่อน, ริบบิ้น] */
+  var GIFTCOL = [
+    ['#e8305f', '#ff7a9c', '#ffd23f'], ['#f07c1a', '#ffb45e', '#fff2b0'],
+    ['#1fb36e', '#6fe3a8', '#ffd23f'], ['#0f8fd6', '#65cdf5', '#fff2b0'],
+    ['#6c3fd4', '#a985f5', '#ffd23f'], ['#d41f86', '#ff77c2', '#fff2b0'],
+    ['#0ea394', '#63ded0', '#ffd23f'], ['#c99a00', '#ffd95e', '#ffffff'],
+    ['#3355cc', '#7f9bff', '#ffd23f']
+  ];
+
+  function przList(a) {
+    var th = ['🎁 ของแถม', '💰 ลด 100.-', '☕ กาแฟฟรี', '🎫 คูปอง 50%', '😅 เสียใจด้วย',
+              '🏆 รางวัลใหญ่', '🧢 หมวกแบรนด์', '🛍️ ถุงผ้า', '⭐ แต้มสะสม x2'];
+    var en = ['🎁 Free gift', '💰 100 off', '☕ Free coffee', '🎫 50% coupon', '😅 Try again',
+              '🏆 Grand prize', '🧢 Brand cap', '🛍️ Tote bag', '⭐ 2× points'];
+    return a.shuffle((a.lang === 'en' ? en : th).slice());
+  }
+
+  /* วาดกล่องของขวัญ 1 ใบ
+     x,y = จุดกึ่งกลางกล่อง   s = ความสูงรวม (รวมฝา)   ci = ดัชนีสี
+     opt = { open:true ฝาเปิดลอยขึ้น, alpha, rot, scale } */
+  function giftBox(g, a, x, y, s, ci, opt) {
+    opt = opt || {};
+    var col = GIFTCOL[ci % GIFTCOL.length];
+    var sc = opt.scale || 1;
+    g.save();
+    if (opt.alpha !== undefined) g.globalAlpha = opt.alpha;
+    g.translate(x, y);
+    if (opt.rot) g.rotate(opt.rot);
+    if (sc !== 1) g.scale(sc, sc);
+
+    /* ใช้ภาพถ้าลูกค้าใส่มา (ภาพควรเป็นสีขาว/เทาเพื่อให้ย้อมสีได้) */
+    if (a.hasSpr(opt.open ? 'boxOpen' : 'box')) {
+      g.restore();
+      a.sprTint(opt.open ? 'boxOpen' : 'box', col[0], null, x, y, s * sc,
+                { rot: opt.rot, alpha: opt.alpha });
+      return;
+    }
+
+    var w = s * .86, h = s * .66;          /* ตัวกล่อง */
+    var lidH = s * .20, lidW = w * 1.10;
+    var lift = opt.open ? s * .34 : 0;     /* ฝาเปิดลอยขึ้น */
+    var by = -h / 2 + lidH * .45;          /* ขอบบนตัวกล่อง */
+
+    /* เงาใต้กล่อง */
+    g.save();
+    g.globalAlpha = (opt.alpha !== undefined ? opt.alpha : 1) * .22;
+    g.fillStyle = '#000';
+    g.beginPath(); g.ellipse(0, by + h + s * .03, w * .48, s * .055, 0, 0, 6.29); g.fill();
+    g.restore();
+
+    /* ตัวกล่อง */
+    var gr = g.createLinearGradient(-w / 2, by, w / 2, by + h);
+    gr.addColorStop(0, col[1]); gr.addColorStop(1, col[0]);
+    a.rr(-w / 2, by, w, h, s * .06); g.fillStyle = gr; g.fill();
+
+    /* ริบบิ้นแนวตั้ง */
+    g.fillStyle = col[2];
+    g.fillRect(-w * .085, by, w * .17, h);
+
+    /* ฝากล่อง */
+    var lg = g.createLinearGradient(-lidW / 2, by - lidH - lift, lidW / 2, by - lift);
+    lg.addColorStop(0, col[1]); lg.addColorStop(1, col[0]);
+    a.rr(-lidW / 2, by - lidH - lift, lidW, lidH, s * .05); g.fillStyle = lg; g.fill();
+    g.fillStyle = col[2];
+    g.fillRect(-w * .085, by - lidH - lift, w * .17, lidH);
+
+    /* โบว์ */
+    var byy = by - lidH - lift, br = s * .105;
+    g.fillStyle = col[2];
+    g.beginPath(); g.ellipse(-br * .95, byy - br * .55, br, br * .68, -.35, 0, 6.29); g.fill();
+    g.beginPath(); g.ellipse(br * .95, byy - br * .55, br, br * .68, .35, 0, 6.29); g.fill();
+    g.beginPath(); g.arc(0, byy - br * .42, br * .46, 0, 6.29); g.fill();
+
+    /* แสงวาบตอนเปิด */
+    if (opt.open) {
+      g.globalAlpha = (opt.alpha !== undefined ? opt.alpha : 1) * .75;
+      var rg = g.createRadialGradient(0, by, 0, 0, by, s * .62);
+      rg.addColorStop(0, 'rgba(255,231,150,.95)'); rg.addColorStop(1, 'rgba(255,210,63,0)');
+      g.fillStyle = rg;
+      g.beginPath(); g.arc(0, by, s * .62, 0, 6.29); g.fill();
+    }
+    g.restore();
+  }
+
+  /* กล่องข้อความรางวัลกลางจอ (ใช้ร่วมกันทั้ง 3 เกม) */
+  function prizePanel(g, a, prize, showTap) {
+    var pw = Math.min(a.W * .86, a.mn * 1.0), ph = a.mn * .24;
+    a.fillRR((a.W - pw) / 2, a.H / 2 - ph / 2, pw, ph, a.mn * .034, 'rgba(10,5,25,.88)');
+    a.text(a.txt({ th: 'คุณได้รับ', en: 'You won' }), a.W / 2, a.H / 2 - ph * .27, a.mn * .036, 'rgba(255,255,255,.75)');
+    var fs = a.mn * .062;
+    g.font = '700 ' + fs + 'px Kanit,sans-serif';
+    while (g.measureText(prize).width > pw * .88 && fs > 10) { fs -= 1; g.font = '700 ' + fs + 'px Kanit,sans-serif'; }
+    a.text(prize, a.W / 2, a.H / 2 + ph * .06, fs, a.C.accent);
+    if (showTap) a.text(a.txt({ th: 'แตะเพื่อเล่นอีกครั้ง', en: 'Tap to play again' }),
+                        a.W / 2, a.H / 2 + ph * .34, a.mn * .028, 'rgba(255,255,255,.6)');
+  }
+
+  function confetti(a, x, y) {
+    var d = a.data;
+    for (var k = 0; k < 70; k++) d.conf.push({
+      x: x, y: y, v: a.rnd(-a.mn * .6, a.mn * .6), h: a.rnd(-a.mn * .6, a.mn * .6),
+      life: a.rnd(.8, 1.8), c: a.pick(['#ff2e88', '#ffd23f', '#00d4ff', '#2fe08a', '#ff6a3d'])
+    });
+  }
+  function stepConf(dt, a) {
+    var d = a.data;
+    d.conf.forEach(function (c) { c.y += c.v * dt; c.x += c.h * dt; c.life -= dt; });
+    d.conf = d.conf.filter(function (c) { return c.life > 0; });
+  }
+  function drawConf(g, a) {
+    a.data.conf.forEach(function (c) {
+      g.fillStyle = c.c; g.globalAlpha = Math.min(1, c.life);
+      g.fillRect(c.x, c.y, a.mn * .014, a.mn * .022); g.globalAlpha = 1;
+    });
+  }
+
+  /* เปิดกล่อง: เอฟเฟกต์ + เก็บรางวัลที่ได้ */
+  function openIt(a, prize, x, y) {
+    var d = a.data;
+    d.open = true; d.prize = prize; d.t = 0; d.ox = x; d.oy = y;
+    a.beep(1000, .25, 'triangle'); a.shake(.014, .3); a.flash('#ffd23f', .2);
+    confetti(a, a.W / 2, a.H / 2);
+  }
+
+
+  /* ============================================================
+     102 เลือกกล่องของขวัญ v.2 — แผง 3x3 สลับตำแหน่งทุก 2 วินาที
+     ============================================================ */
+  R('giftpick2', {
+    time: 0, noScore: true,
+    setup: function (a) {
+      var d = a.data;
+      var gap = a.mn * .05;
+      var bw = Math.min((a.W * .88 - gap * 2) / 3, a.mn * .28), bh = bw * (a.port ? .95 : .85);
+      var top = a.mn * .16;
+      d.LO = { bw: bw, bh: bh, gap: gap,
+               ox: (a.W - (bw * 3 + gap * 2)) / 2,
+               oy: top + (a.H - top - (bh * 3 + gap * 2)) / 2 };
+      newRound102(a);
+      d.conf = [];
+    },
+    update: function (dt, a) {
+      var d = a.data;
+      stepConf(dt, a);
+      if (d.open) { d.t += dt; return; }
+      /* อนิเมชันสลับที่ */
+      if (d.sw) {
+        d.sw.t += dt / .55;
+        if (d.sw.t >= 1) {
+          d.sw.pairs.forEach(function (p) {
+            var t = d.box[p[0]].slot; d.box[p[0]].slot = d.box[p[1]].slot; d.box[p[1]].slot = t;
+          });
+          d.sw = null;
+        }
+        return;
+      }
+      d.wait -= dt;
+      if (d.wait <= 0) {
+        d.wait = 2;
+        /* สุ่ม 2 คู่ที่ไม่ซ้ำกัน */
+        var idx = a.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+        d.sw = { t: 0, pairs: [[idx[0], idx[1]], [idx[2], idx[3]]] };
+        a.beep(420, .05);
+      }
+    },
+    down: function (x, y, a) {
+      var d = a.data;
+      if (d.open) { if (d.t > .8) newRound102(a); return; }
+      for (var i = 0; i < 9; i++) {
+        var p = boxPos102(a, i), r = d.LO.bw * .5;
+        if (Math.abs(x - p.x) < r && Math.abs(y - p.y) < d.LO.bh * .55) {
+          d.sel = i; openIt(a, d.box[i].prize, p.x, p.y);
+          return;
+        }
+      }
+    },
+    draw: function (g, a) {
+      a.bg('#12093a', '#6a1b9a');
+      var d = a.data, L = d.LO;
+      /* กล่องที่อยู่ไกลวาดก่อน เวลาสลับจะได้ซ้อนกันสวย */
+      var order = [0, 1, 2, 3, 4, 5, 6, 7, 8].sort(function (i, j) { return boxPos102(a, i).y - boxPos102(a, j).y; });
+      order.forEach(function (i) {
+        var p = boxPos102(a, i), isSel = d.open && d.sel === i;
+        var dim = d.open && !isSel ? .45 : 1;
+        var pp = isSel ? a.pop(Math.min(1, d.t / .4)) : 1 + Math.sin(a.now * 3 + i) * .02;
+        giftBox(g, a, p.x, p.y - (isSel ? Math.min(L.bh * .2, d.t * L.bh * .7) : 0),
+                L.bh * pp, d.box[i].col, { open: isSel, alpha: dim, rot: p.rot });
+      });
+      drawConf(g, a);
+      if (d.open) prizePanel(g, a, d.prize, d.t > .8);
+      else a.head(a.txt({ th: 'กล่องสลับที่ไปมา จับจังหวะแล้วเลือก 1 กล่อง', en: 'The boxes keep swapping — pick one' }));
+    }
+  });
+
+  function newRound102(a) {
+    var d = a.data, prz = przList(a), cols = a.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    d.box = [];
+    for (var i = 0; i < 9; i++) d.box.push({ slot: i, prize: prz[i], col: cols[i] });
+    d.open = false; d.sel = -1; d.t = 0; d.sw = null; d.wait = 2;
+  }
+  function slotPos102(a, s) {
+    var L = a.data.LO;
+    return { x: L.ox + (s % 3) * (L.bw + L.gap) + L.bw / 2,
+             y: L.oy + Math.floor(s / 3) * (L.bh + L.gap) + L.bh / 2 };
+  }
+  /* ตำแหน่งจริงของกล่อง i ระหว่างสลับที่ = วิ่งโค้งจากช่องเดิมไปช่องใหม่ */
+  function boxPos102(a, i) {
+    var d = a.data, from = slotPos102(a, d.box[i].slot);
+    if (!d.sw) return { x: from.x, y: from.y, rot: 0 };
+    var pr = null, other = -1;
+    d.sw.pairs.forEach(function (p) {
+      if (p[0] === i) { pr = p; other = p[1]; }
+      if (p[1] === i) { pr = p; other = p[0]; }
+    });
+    if (!pr) return { x: from.x, y: from.y, rot: 0 };
+    var to = slotPos102(a, d.box[other].slot), t = a.ease(d.sw.t);
+    var arc = Math.sin(t * Math.PI) * a.data.LO.bh * (pr[0] === i ? -.30 : .30);
+    return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t + arc,
+             rot: Math.sin(t * Math.PI) * (pr[0] === i ? .22 : -.22) };
+  }
+
+
+  /* ============================================================
+     103 เลือกกล่องของขวัญ v.3 — กล่องไหลมาบนสายพาน
+     ============================================================ */
+  R('giftpick3', {
+    time: 0, noScore: true,
+    setup: function (a) {
+      var d = a.data;
+      d.beltY = a.H * (a.port ? .62 : .66);          /* เส้นผิวบนของสายพาน */
+      d.beltH = a.mn * .085;
+      d.spd = a.W * (a.port ? .16 : .13);            /* ความเร็วสายพาน px/วิ */
+      d.items = []; d.conf = []; d.scroll = 0;
+      d.open = false; d.t = 0; d.sel = null;
+      d.prz = przList(a); d.pi = 0;
+      /* เติมกล่องให้เต็มสายพานตั้งแต่เริ่ม */
+      var x = a.W * .12;
+      while (x < a.W * 1.1) x += spawn103(a, x) + a.mn * a.rnd(.20, .28);
+    },
+    update: function (dt, a) {
+      var d = a.data;
+      stepConf(dt, a);
+      if (d.open) { d.t += dt; return; }
+      d.scroll += d.spd * dt;
+      d.items.forEach(function (it) { it.x -= d.spd * dt; });
+      d.items = d.items.filter(function (it) { return it.x > -a.W * .25; });
+      /* เติมกล่องใหม่ทางขวา */
+      var last = 0;
+      d.items.forEach(function (it) { last = Math.max(last, it.x + it.s * .6); });
+      while (last < a.W * 1.15) {
+        var nx = last + a.mn * a.rnd(.20, .28);
+        last = nx + spawn103(a, nx);
+      }
+    },
+    down: function (x, y, a) {
+      var d = a.data;
+      if (d.open) {
+        if (d.t > .8) {
+          /* กล่องที่เปิดไปแล้วเอาออกจากสายพาน แล้วเดินสายพานต่อ */
+          d.items = d.items.filter(function (it) { return it !== d.sel; });
+          d.open = false; d.sel = null;
+        }
+        return;
+      }
+      for (var i = d.items.length - 1; i >= 0; i--) {
+        var it = d.items[i];
+        if (Math.abs(x - it.x) < it.s * .45 && y > it.cy - it.s * .6 && y < it.cy + it.s * .55) {
+          d.sel = it; openIt(a, it.prize, it.x, it.cy);
+          return;
+        }
+      }
+    },
+    draw: function (g, a) {
+      a.bg('#1a1040', '#3e2a86');
+      var d = a.data;
+      drawBelt103(g, a);
+      d.items.forEach(function (it) {
+        var isSel = d.open && d.sel === it;
+        var dim = d.open && !isSel ? .45 : 1;
+        var bob = d.open ? 0 : Math.sin(a.now * 6 + it.ph) * it.s * .012;
+        var pp = isSel ? a.pop(Math.min(1, d.t / .4)) : 1;
+        giftBox(g, a, it.x, it.cy + bob - (isSel ? Math.min(it.s * .25, d.t * it.s * .8) : 0),
+                it.s * pp, it.col, { open: isSel, alpha: dim });
+      });
+      drawConf(g, a);
+      if (d.open) prizePanel(g, a, d.prize, d.t > .8);
+      else a.head(a.txt({ th: 'แตะเลือกกล่องที่ไหลผ่านสายพาน', en: 'Tap a box as it rides past' }));
+    }
+  });
+
+  /* ปล่อยกล่องใหม่ที่ตำแหน่ง x คืนค่าครึ่งความกว้างของกล่อง (ไว้คำนวณช่องว่างถัดไป) */
+  function spawn103(a, x) {
+    var d = a.data;
+    var s = a.mn * a.rnd(.14, .26);                 /* ขนาดเล็กใหญ่ไม่เท่ากัน */
+    d.items.push({
+      x: x, s: s, cy: d.beltY - s * .42, ph: a.rnd(0, 6.28),
+      col: a.rndi(0, GIFTCOL.length - 1),
+      prize: d.prz[(d.pi++) % d.prz.length]
+    });
+    return s * .55;
+  }
+
+  /* สายพาน: แถบเข้ม + ลูกกลิ้ง + ลายทแยงที่เลื่อนไปตามความเร็ว */
+  function drawBelt103(g, a) {
+    var d = a.data, y = d.beltY, h = d.beltH;
+    /* โครงใต้สายพาน */
+    a.fillRR(-a.mn * .05, y + h, a.W + a.mn * .1, a.mn * .05, a.mn * .012, 'rgba(10,8,30,.55)');
+    /* ผิวสายพาน */
+    var gr = g.createLinearGradient(0, y, 0, y + h);
+    gr.addColorStop(0, '#3a3a46'); gr.addColorStop(.5, '#23232c'); gr.addColorStop(1, '#14141b');
+    g.fillStyle = gr; g.fillRect(0, y, a.W, h);
+    /* ลายทแยงเลื่อน */
+    g.save(); g.beginPath(); g.rect(0, y, a.W, h); g.clip();
+    g.strokeStyle = 'rgba(255,255,255,.10)'; g.lineWidth = Math.max(2, h * .16);
+    var step = h * 1.15, off = (-d.scroll) % (step * 2);
+    for (var x = off - step * 2; x < a.W + step * 2; x += step * 2) {
+      g.beginPath(); g.moveTo(x, y + h); g.lineTo(x + h, y); g.stroke();
+    }
+    g.restore();
+    /* ขอบบน-ล่าง */
+    g.fillStyle = 'rgba(255,255,255,.16)'; g.fillRect(0, y, a.W, Math.max(1, h * .07));
+    /* ลูกกลิ้งสองข้าง */
+    var rr = h * .72;
+    [rr * .9, a.W - rr * .9].forEach(function (cx) {
+      var rg = g.createRadialGradient(cx - rr * .3, y + h / 2 - rr * .3, rr * .1, cx, y + h / 2, rr);
+      rg.addColorStop(0, '#9aa0b5'); rg.addColorStop(1, '#40465c');
+      g.fillStyle = rg; g.beginPath(); g.arc(cx, y + h / 2, rr, 0, 6.29); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = Math.max(1.5, rr * .10);
+      g.beginPath();
+      var ang = d.scroll / rr;
+      g.moveTo(cx + Math.cos(ang) * rr * .62, y + h / 2 + Math.sin(ang) * rr * .62);
+      g.lineTo(cx - Math.cos(ang) * rr * .62, y + h / 2 - Math.sin(ang) * rr * .62);
+      g.stroke();
+    });
+  }
+
+
+  /* ============================================================
+     104 เลือกกล่องของขวัญ v.4 — กล่องร่วงลงมา แกว่งและสั่นไม่เท่ากัน
+     ============================================================ */
+  R('giftpick4', {
+    time: 0, noScore: true,
+    setup: function (a) {
+      var d = a.data;
+      d.items = []; d.conf = []; d.open = false; d.t = 0;
+      d.prz = przList(a); d.pi = 0;
+      /* เริ่มเกมให้มีกล่องกระจายอยู่ทั่วจอแล้ว */
+      for (var i = 0; i < 7; i++) { var it = mk104(a); it.y = a.rnd(-a.H * .1, a.H * .9); d.items.push(it); }
+    },
+    update: function (dt, a) {
+      var d = a.data;
+      stepConf(dt, a);
+      if (d.open) { d.t += dt; return; }
+      d.items.forEach(function (it) {
+        it.y += it.vy * dt;
+        it.ph += dt * it.sway;                   /* จังหวะแกว่งซ้ายขวา */
+        it.sh += dt * it.shakeSpd;               /* จังหวะสั่น */
+      });
+      d.items = d.items.filter(function (it) { return it.y < a.H + it.s; });
+      while (d.items.length < 7) d.items.push(mk104(a));
+    },
+    down: function (x, y, a) {
+      var d = a.data;
+      if (d.open) {
+        if (d.t > .8) {
+          /* กล่องที่เปิดแล้วหายไป มีใบใหม่ร่วงลงมาแทน */
+          d.items = d.items.filter(function (it) { return it !== d.sel; });
+          d.open = false; d.sel = null;
+        }
+        return;
+      }
+      for (var i = d.items.length - 1; i >= 0; i--) {
+        var it = d.items[i], px = x104(a, it);
+        if (Math.abs(x - px) < it.s * .48 && Math.abs(y - it.y) < it.s * .52) {
+          d.sel = it; it.vy = 0; openIt(a, it.prize, px, it.y);
+          return;
+        }
+      }
+    },
+    draw: function (g, a) {
+      a.bg('#0e0b33', '#4a1b7a');
+      var d = a.data;
+      d.items.forEach(function (it) {
+        var isSel = d.open && d.sel === it;
+        var dim = d.open && !isSel ? .45 : 1;
+        var rot = isSel ? 0 : Math.sin(it.sh) * it.shake + Math.sin(it.ph) * .10;
+        var pp = isSel ? a.pop(Math.min(1, d.t / .4)) : 1;
+        giftBox(g, a, x104(a, it), it.y, it.s * pp, it.col, { open: isSel, alpha: dim, rot: rot });
+      });
+      drawConf(g, a);
+      if (d.open) prizePanel(g, a, d.prize, d.t > .8);
+      else a.head(a.txt({ th: 'กล่องกำลังร่วงลงมา แตะเลือก 1 กล่อง', en: 'Boxes are falling — tap one' }));
+    }
+  });
+
+  /* กล่องใหม่ 1 ใบ: ขนาด สี ความเร็วตก ระยะแกว่ง และความแรงสั่น สุ่มแยกกันทุกใบ */
+  function mk104(a) {
+    var d = a.data, s = a.mn * a.rnd(.15, .26);
+    return {
+      s: s, col: a.rndi(0, GIFTCOL.length - 1),
+      bx: a.rnd(a.W * .14, a.W * .86),       /* แกนกลางที่ใช้แกว่งรอบ ๆ */
+      y: -s * a.rnd(.6, 2.4),
+      vy: a.mn * a.rnd(.11, .34),            /* บางใบตกช้า บางใบตกเร็ว */
+      amp: a.rnd(a.mn * .02, a.mn * .09),    /* ระยะแกว่งซ้ายขวา */
+      sway: a.rnd(.9, 2.2), ph: a.rnd(0, 6.28),
+      shake: a.rnd(.02, .20),                /* บางใบสั่นแรง บางใบสั่นบาง */
+      shakeSpd: a.rnd(7, 20), sh: a.rnd(0, 6.28),
+      prize: d.prz[(d.pi++) % d.prz.length]
+    };
+  }
+  function x104(a, it) {
+    var x = it.bx + Math.sin(it.ph) * it.amp;
+    return Math.max(it.s * .5, Math.min(a.W - it.s * .5, x));
+  }
+
 })();
