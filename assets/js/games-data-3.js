@@ -353,5 +353,17 @@ window.GAMES = window.GAMES.concat([
   en: { name: "Sprint Race", tag: "Alternate left-right taps to reach the line first",
     how: ["Two runners, one lane each","Tap left then right, alternating, inside your own side","Good rhythm means real speed; mashing randomly slows you down","First across the finish line wins"],
     custom: ["Runner per side","Track and finish-line colors","Trackside banners","Background"] }
+},
+
+/* ---------- 101 ---------- */
+{
+  id: "scratch2", icon: "🎟️", cat: "luck", c1: "#2b1b6e", c2: "#ff9f1c", time: 0,
+  devices: ["touch","kiosk","tablet","mobile"],
+  th: { name: "บัตรขูด v.2", tag: "เลือกบัตรจากแผง 9 ใบ แล้วขูดลุ้นรางวัล",
+    how: ["หน้าแรกเป็นแผงบัตรขูด 9 ใบให้เลือก","แตะใบที่ถูกใจ บัตรจะขยายขึ้นกลางจอ","ลากนิ้วขูดให้ครบ 55% ระบบเปิดรางวัลให้เอง","แตะอีกครั้งเพื่อกลับไปเลือกใบต่อไป ครบ 9 ใบเริ่มแผงใหม่"],
+    custom: ["สีและลายบัตรทั้ง 9 ใบ","ภาพชั้นขูด (ลายแบรนด์)","รายการรางวัล","โลโก้บนบัตร","เปลี่ยนภาพพื้นหลัง"] },
+  en: { name: "Scratch Card v.2", tag: "Pick one of nine cards, then scratch to win",
+    how: ["Start on a panel of nine scratch cards","Tap the one you like — it zooms up to the centre","Scratch 55% of the foil and the prize reveals itself","Tap again to go back and pick another; all nine used starts a fresh panel"],
+    custom: ["Colors and pattern of all nine cards","Foil artwork (brand pattern)","Prize list","Logo on the card","Background image"] }
 }
 ]);

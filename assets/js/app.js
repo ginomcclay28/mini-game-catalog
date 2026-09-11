@@ -29,12 +29,12 @@
     th: {
       heroTitle: "100+ เกมทัชสกรีน พร้อมใช้งานทันที",
       heroDesc: "เลือกแนวเกมที่ชอบ กดทดลองเล่นได้จริงบนหน้าเว็บนี้เลย ทุกเกมออกแบบมาสำหรับจอสัมผัสโดยเฉพาะ เล่นง่าย เข้าใจใน 3 วินาที เหมาะกับงานอีเวนต์ บูธแสดงสินค้า และหน้าร้าน",
-      startAt: "เริ่มต้น", perGame: "บาท / เกม", tryPlay: "ทดลองเล่น", nextGame: "เกมถัดไป",
+      tryPlay: "ทดลองเล่น", nextGame: "เกมถัดไป",
       hHow: "วิธีเล่น", hDev: "ใช้กับอุปกรณ์อะไรได้บ้าง", hCus: "เปลี่ยนกราฟฟิกส่วนไหนได้บ้าง",
-      lockNote: "🔒 รูปแบบการเล่น กติกา และระบบคะแนน เป็นแบบมาตรฐานตามราคานี้ หากต้องการปรับกลไกการเล่นใหม่ คิดราคาเพิ่มตามงาน",
+      lockNote: "🔒 รูปแบบการเล่น กติกา และระบบคะแนน เป็นแบบมาตรฐาน หากต้องการปรับกลไกการเล่นใหม่ แจ้งทีมงานเพื่อประเมินงานเพิ่มเติม",
       all: "ทั้งหมด", prev: "ก่อนหน้า", next: "ถัดไป",
       pgnote: function (a, b, c) { return "แสดงเกมที่ " + a + "–" + b + " จากทั้งหมด " + c + " เกม"; },
-      footNote: "ราคา 9,500 บาท/เกม เป็นราคาสำหรับรูปแบบการเล่นมาตรฐานตามที่แสดงในเว็บนี้<br>ลูกค้าปรับแต่งได้ในส่วนของกราฟฟิก โลโก้ และภาพพื้นหลัง",
+      footNote: "ทุกเกมเป็นรูปแบบการเล่นมาตรฐานตามที่แสดงในเว็บนี้<br>ลูกค้าปรับแต่งได้ในส่วนของกราฟฟิก โลโก้ และภาพพื้นหลัง",
       sec: "วินาที", noTime: "ไม่จำกัดเวลา",
       hSim: "ดูตัวอย่างบนจอหน้างาน", land: "แนวนอน 16:9", port: "แนวตั้ง 9:16",
       simNote: "เลือกแนวจอที่จะใช้จริงหน้างาน แล้วกดทดลองเล่น เกมจะจัดวางใหม่ให้พอดีจอนั้นโดยอัตโนมัติ",
@@ -47,12 +47,12 @@
     en: {
       heroTitle: "100+ Touchscreen Games, Ready to Deploy",
       heroDesc: "Browse the styles you like and play every one of them right here in the browser. Each game is built for touch screens — simple enough to understand in three seconds. Perfect for events, trade-show booths and retail.",
-      startAt: "From", perGame: "THB / game", tryPlay: "Try it now", nextGame: "Next game",
+      tryPlay: "Try it now", nextGame: "Next game",
       hHow: "How to play", hDev: "Works on", hCus: "What you can re-skin",
-      lockNote: "🔒 Gameplay, rules and scoring are fixed at this price. Custom mechanics are quoted separately.",
+      lockNote: "🔒 Gameplay, rules and scoring are standard. Custom mechanics are quoted separately.",
       all: "All", prev: "Prev", next: "Next",
       pgnote: function (a, b, c) { return "Showing " + a + "–" + b + " of " + c + " games"; },
-      footNote: "THB 9,500 per game covers the standard gameplay shown on this site.<br>Customisation covers graphics, logo and background art.",
+      footNote: "Every game ships with the standard gameplay shown on this site.<br>Customisation covers graphics, logo and background art.",
       sec: "sec", noTime: "No time limit",
       hSim: "Preview on the real screen", land: "Landscape 16:9", port: "Portrait 9:16",
       simNote: "Pick the screen orientation you'll use on site, then hit play — the game re-lays itself out to fit.",
@@ -100,7 +100,6 @@
     });
     $('#brandName').textContent = BRAND.name;
     $('#brandTag').textContent = BRAND.tagline[lang];
-    $('#mPrice').textContent = BRAND.price.toLocaleString();
     if (BRAND.logo) {
       var lm = $('#logoMark');
       lm.classList.add('has-img');
@@ -150,8 +149,10 @@
       var src = art(no);
       html += '<article class="card" data-id="' + g.id + '">' +
         '<div class="thumb' + (src ? ' has-art' : '') + '" style="background:linear-gradient(140deg,' + g.c1 + ',' + g.c2 + ')">' +
-        (src ? '<img class="art" src="' + src + '" alt="' + esc(d.name) + '" loading="lazy" decoding="async">'
-             : '<div class="ico">' + g.icon + '</div>') +
+        /* ยังไม่มีไฟล์ภาพการ์ด (เช่นเกมใหม่ที่เพิ่งเพิ่ม) ให้ถอยไปใช้อิโมจิ ไม่โชว์รูปแตก */
+        '<div class="ico">' + g.icon + '</div>' +
+        (src ? '<img class="art" src="' + src + '" alt="' + esc(d.name) + '" loading="lazy" decoding="async"' +
+               ' onerror="this.parentNode.classList.remove(\'has-art\');this.remove()">' : '') +
         '<span class="no">#' + (no < 10 ? '0' + no : no) + '</span>' +
         '<div class="play-ov"><span>▶</span></div>' +
         '</div>' +
@@ -254,6 +255,8 @@
     hero.style.background = 'linear-gradient(140deg,' + g.c1 + ',' + g.c2 + ')';
     hero.classList.toggle('has-art', !!src);
     if (src) {
+      /* ไม่มีไฟล์ภาพ -> ถอยไปใช้อิโมจิ ไม่โชว์รูปแตก */
+      aImg.onerror = function () { hero.classList.remove('has-art'); aImg.hidden = true; aBg.style.backgroundImage = ''; };
       aImg.src = src; aImg.alt = d.name; aImg.hidden = false;
       aBg.style.backgroundImage = 'url("' + src + '")';
     } else {

@@ -258,8 +258,6 @@ button{font-family:inherit;cursor:pointer;border:0}
 .btn-1{background:var(--ink);color:#fff}
 .btn-2{background:#eeebe2;color:var(--ink)}
 .btn:hover{transform:translateY(-2px)}
-.price-line{margin-top:16px;font-size:14px;color:var(--ink2)}
-.price-line b{color:var(--p);font-size:20px}
 
 /* ---------- FOOTER ---------- */
 .foot{text-align:center;padding:34px 22px 46px;color:var(--ink2);font-size:13.5px;line-height:1.8}
@@ -269,7 +267,7 @@ button{font-family:inherit;cursor:pointer;border:0}
   .modal{flex-direction:column;width:min(560px,100%)}
   .m-hero{flex:0 0 auto;align-self:stretch;width:100%;aspect-ratio:1/1;min-height:0;max-height:52vh}
   .m-body{padding:24px 22px 26px}
-  .m-body h2,.m-sub,.price-line{text-align:center}
+  .m-body h2,.m-sub{text-align:center}
   .m-stats,.m-foot{justify-content:center}
   .likemsg{text-align:center}
 }
